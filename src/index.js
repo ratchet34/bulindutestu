@@ -6,7 +6,6 @@ import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(
   <React.StrictMode>
-    <script src="https://sdk.scdn.co/spotify-player.js"></script>
     <App />
   </React.StrictMode>,
   document.getElementById('root')
