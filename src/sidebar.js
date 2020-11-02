@@ -6,6 +6,7 @@ import {
     Segment,
     Sidebar,
 } from 'semantic-ui-react'
+import MyVideo from './video'
 import MyAudio from './audio'
 import MyItems from './addItem'
 
@@ -51,6 +52,7 @@ const MySidebar = (allData) => {
                 <Segment basic>
                     <Button secondary
                         onClick={(e) => setVisible(true)}>Menu</Button>
+                    {menu === 'video' && <MyVideo allData={allData}/>}
                     {menu === 'audio' && <MyAudio allData={allData}/>}
                     {menu === 'items' && <MyItems allData={allData}/>}
                 </Segment>

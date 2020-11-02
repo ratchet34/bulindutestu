@@ -13,7 +13,7 @@ import {
 
 
 
-class MyAudio extends React.Component {
+class MyVideo extends React.Component {
 
   constructor(props) {
     super(props);
@@ -156,7 +156,7 @@ class MyAudio extends React.Component {
   render() {
     return (
       <Segment>
-        <Header as='h3'>Audio</Header>
+        <Header as='h3'>Video</Header>
         <Segment basic>
           <Button secondary onClick={(e) => this.setState({ visible: !this.state.visible })}>Reveal</Button>
           {this.state.data === null && <Button secondary onClick={this.prepareNextRound} disabled={this.state.loading}>Start</Button>}
@@ -164,7 +164,8 @@ class MyAudio extends React.Component {
           <Segment textAlign='center'>
             {this.state.data != null && <Progress progress='value' indicating value={this.state.answerTimer} total={this.state.data.answerTime} />}
             {this.state.loading && <Loader active />}
-            <Segment basic style={{ display: this.state.visible ? 'block' : 'none' }}>
+            <Segment basic>
+              {this.state.data != null && this.state.visible === false && <div style={{height: '70px', width: 'calc(100% - 2em)', backgroundColor: 'black', position: 'absolute', top: '1em'}}></div>}
               {this.state.data != null && <YouTube name='ytplayer' videoId={this.state.data === null ? 'dummy' : this.state.data.id} opts={this.opts} onReady={this._onReady} onStateChange={this._onStateChange} style={{position: 'absolute', top: '0', zIndex: '10'}}/>}
             </Segment>
           </Segment>
@@ -229,4 +230,4 @@ class MyAudio extends React.Component {
   }
 }
 
-export default MyAudio
+export default MyVideo
