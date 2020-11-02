@@ -11,26 +11,7 @@ import {
   Progress
 } from 'semantic-ui-react'
 
-const allData = [
-  {
-    title: "How You Like That",
-    artist: "Blackpink",
-    id: "32si5cfrCNc",
-    done: "false",
-    from: 30,
-    time: 15,
-    answerTime: 30
-  },
-  {
-    title: "Wannabe",
-    artist: "ITZY",
-    id: "fE2h3lGlOsk",
-    done: "false",
-    from: 0,
-    time: 25,
-    answerTime: 30
-  }
-]
+
 
 class MyAudio extends React.Component {
 
@@ -46,18 +27,20 @@ class MyAudio extends React.Component {
         titleMatch: false,
         artist: '',
         artistMatch: false,
+        origin: '',
+        originMatch: '',
       },
       checked: false,
       start: false,
       ytplayer: null,
       loading: false,
       modal: false,
+      modalError: false,
     };
   }
 
   opts = {
-    height: '390',
-    width: '640',
+    width: '100%',
     playerVars: {
       // https://developers.google.com/youtube/player_parameters
       autoplay: 0,
@@ -67,6 +50,7 @@ class MyAudio extends React.Component {
   player = null;
 
   _onReady = (event) => {
+    console.log('_onReady')
     // access to player in all event handlers via event.target
     this.setState({ ytplayer: event.target });
     event.target.seekTo(this.state.data.from, true)
@@ -74,6 +58,7 @@ class MyAudio extends React.Component {
   }
 
   _onStateChange = (event) => {
+    console.log('_onStateChange')
     console.log('Youtube player state: ' + event.data)
     switch (event.data) {
       case 1:
@@ -92,14 +77,24 @@ class MyAudio extends React.Component {
   }
 
   selectData = () => {
+    console.log('selectData')
+    console.log(this.props.allData.allData)
     var currData = null;
-    while (currData === null || currData.done === false) {
-      currData = allData[Math.floor(Math.random() * allData.length)];
+    var allData = this.props.allData.allData;
+    var notdone = allData.map(x => x.done).indexOf(false);
+    if (notdone !== -1) {
+      while (currData === null || currData.done === true) {
+        currData = allData[Math.floor(Math.random() * allData.length)];
+      }
+      this.setState({ data: currData, timer: currData.time, answerTimer: currData.answerTime, loading: true, start: false });
+      this.props.allData.allData[this.props.allData.allData.indexOf(currData)].done = true;
+    } else {
+      this.setState({ modalError: true})
     }
-    this.setState({ data: currData, timer: currData.time, answerTimer: currData.answerTime, loading: true, start: false })
   }
 
   prepareNextRound = () => {
+    console.log('prepareNextRound')
     /*if (this.state.ytplayer != null) {
       this.state.ytplayer.pauseVideo();
     }*/
@@ -111,7 +106,7 @@ class MyAudio extends React.Component {
   }
 
   startRound = () => {
-
+    console.log('startRound')
     this.setState({ start: true, loading: false });
     var countdown = setInterval(() => {
       if (this.state.timer <= 0) {
@@ -133,22 +128,26 @@ class MyAudio extends React.Component {
   }
 
   checkValues = () => {
-    var am = (this.state.data.artist != null && this.state.fields.artist.toLowerCase() === this.state.data.artist.toLowerCase()) ? true : false;
-    var tm = (this.state.data.title != null && this.state.fields.title.toLowerCase() === this.state.data.title.toLowerCase()) ? true : false;
-
-    this.setState({ checked: true, fields: {artistMatch: am, titleMatch: tm} }, this.postCheck);
+    console.log(this.state.fields)
+    var am = ("artist" in this.state.data === false || this.state.fields.artist.toLowerCase() === this.state.data.artist.toLowerCase()) ? true : false;
+    var tm = ("title" in this.state.data === false || this.state.fields.title.toLowerCase() === this.state.data.title.toLowerCase()) ? true : false;
+    var om = ("origin" in this.state.data === false || this.state.fields.origin.toLowerCase() === this.state.data.origin.toLowerCase()) ? true : false;
+    var f = {artist: this.state.fields.artist, artistMatch: am, title: this.state.fields.title, titleMatch: tm, origin: this.state.fields.origin, originMatch: om}
+    this.setState({ checked: true, fields: f }, this.postCheck);
   }
 
   postCheck = () => {
-    if (this.state.fields.artistMatch && this.state.fields.titleMatch) {
+    if (this.state.fields.artistMatch && this.state.fields.titleMatch && this.state.fields.originMatch) {
       this.setState({modal: true})
     }
   }
 
   handleChange = (e) => {
+    console.log('handleChange')
     const value = e.target.value;
     var fields = this.state.fields;
     fields = { ...fields, [e.target.name]: value}
+    console.log(fields)
     this.setState({ fields: fields });
   }
 
@@ -156,7 +155,7 @@ class MyAudio extends React.Component {
     return (
       <Segment>
         <Header as='h3'>Audio</Header>
-        <Container>
+        <Segment basic>
           <Button secondary onClick={(e) => this.setState({ visible: !this.state.visible })}>Reveal</Button>
           {this.state.data === null && <Button secondary onClick={this.prepareNextRound} disabled={this.state.loading}>Start</Button>}
           {this.state.data !== null && <Button secondary onClick={this.prepareNextRound} disabled={this.state.loading}>Next</Button>}
@@ -173,10 +172,12 @@ class MyAudio extends React.Component {
                 <Form.Input fluid name='title' label='Title' placeholder='Title' value={this.state.fields.title} onChange={this.handleChange} error={!this.state.fields.titleMatch && this.state.checked} disabled={this.state.fields.titleMatch && this.state.checked} />}
               {this.state.data != null && this.state.data.artist != null &&
                 <Form.Input fluid name='artist' label='Artist' placeholder='Artist' value={this.state.fields.artist} onChange={this.handleChange} error={!this.state.fields.artistMatch && this.state.checked} disabled={this.state.fields.artistMatch && this.state.checked} />}
+              {this.state.data != null && this.state.data.origin != null &&
+                <Form.Input fluid name='origin' label='Origin' placeholder='Origin' value={this.state.fields.origin} onChange={this.handleChange} error={!this.state.fields.originMatch && this.state.checked} disabled={this.state.fields.originMatch && this.state.checked} />}
             </Form.Group>
             <Form.Button onClick={this.checkValues} disabled={!this.state.start}>Check</Form.Button>
           </Form>
-        </Container>
+        </Segment>
 
         <Modal
           onClose={() => this.setState({modal: false})}
@@ -196,6 +197,28 @@ class MyAudio extends React.Component {
               icon='checkmark'
               onClick={() => this.setState({modal: false})}
               positive
+            />
+          </Modal.Actions>
+        </Modal>
+
+        <Modal
+          onClose={() => this.setState({modalError: false})}
+          onOpen={() => this.setState({modalError: true})}
+          open={this.state.modalError}
+        >
+          <Modal.Header>That's all folks</Modal.Header>
+          <Modal.Content>
+            <Modal.Description>
+              <Header>Sorry but you have done all the items of this category, try addind some more to keep playing</Header>
+            </Modal.Description>
+          </Modal.Content>
+          <Modal.Actions>
+            <Button
+              content="Okay"
+              labelPosition='right'
+              icon='close'
+              onClick={() => this.setState({modalError: false})}
+              negative
             />
           </Modal.Actions>
         </Modal>

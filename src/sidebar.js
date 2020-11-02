@@ -7,8 +7,9 @@ import {
     Sidebar,
 } from 'semantic-ui-react'
 import MyAudio from './audio'
+import MyItems from './addItem'
 
-const MySidebar = () => {
+const MySidebar = (allData) => {
     const [visible, setVisible] = React.useState(false)
     const [menu, setMenu] = React.useState('home')
 
@@ -39,13 +40,19 @@ const MySidebar = () => {
                     <Icon name='video' />
               Video
             </Menu.Item>
+                <Menu.Item as='a'
+                    onClick={(e) => setMenu('items')}>
+                    <Icon name='add' />
+              Add
+            </Menu.Item>
             </Sidebar>
 
             <Sidebar.Pusher dimmed={visible}>
                 <Segment basic>
                     <Button secondary
                         onClick={(e) => setVisible(true)}>Menu</Button>
-                    {menu === 'audio' && <MyAudio />}
+                    {menu === 'audio' && <MyAudio allData={allData}/>}
+                    {menu === 'items' && <MyItems allData={allData}/>}
                 </Segment>
             </Sidebar.Pusher>
         </Sidebar.Pushable>
