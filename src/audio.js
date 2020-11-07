@@ -8,8 +8,12 @@ import {
   Header,
   Container,
   Form,
-  Progress
+  Progress,
+  List,
+  Popup,
 } from 'semantic-ui-react'
+import levenshtein from 'js-levenshtein'
+import distance from 'jaro-winkler'
 
 
 
@@ -24,11 +28,18 @@ class MyAudio extends React.Component {
       answerTimer: 0,
       fields: {
         title: '',
-        titleMatch: false,
         artist: '',
-        artistMatch: false,
         origin: '',
-        originMatch: '',
+      },
+      match: {
+        titleMatch: false,
+        artistMatch: false,
+        originMatch: false,
+      },
+      popup: {
+        title: false,
+        artist: false,
+        origin: false,
       },
       checked: false,
       start: false,
@@ -36,6 +47,8 @@ class MyAudio extends React.Component {
       loading: false,
       modal: false,
       modalError: false,
+      points: 0,
+      roundPoints: 0,
     };
   }
 
@@ -104,7 +117,7 @@ class MyAudio extends React.Component {
     /*if (this.state.ytplayer != null) {
       this.state.ytplayer.playVideo();
     }*/
-    this.setState({ visible: false, fields: { title: '', titleMatch: false, artist: '', artistMatch: false }, checked: false })
+    this.setState({ visible: false, match: { title: '', titleMatch: false, artist: '', artistMatch: false }, checked: false })
   }
 
   startRound = () => {
@@ -127,21 +140,49 @@ class MyAudio extends React.Component {
 
   endRound = () => {
     this.setState({ start: false, visible: true });
+    if (!(this.state.match.artistMatch && this.state.match.titleMatch && this.state.match.originMatch)){
+      this.setState({modal: true})
+    }
   }
 
   checkValues = () => {
     console.log(this.state.fields)
-    var am = ("artist" in this.state.data === false || this.state.fields.artist.toLowerCase() === this.state.data.artist.toLowerCase()) ? true : false;
-    var tm = ("title" in this.state.data === false || this.state.fields.title.toLowerCase() === this.state.data.title.toLowerCase()) ? true : false;
-    var om = ("origin" in this.state.data === false || this.state.fields.origin.toLowerCase() === this.state.data.origin.toLowerCase()) ? true : false;
-    var f = {artist: this.state.fields.artist, artistMatch: am, title: this.state.fields.title, titleMatch: tm, origin: this.state.fields.origin, originMatch: om}
-    this.setState({ checked: true, fields: f }, this.postCheck);
+    if(this.state.data.title != null && this.state.fields.title != null) {
+      console.log('jaro-winkler title: ' + distance(this.reduceField(this.state.data.title), this.reduceField(this.state.fields.title)))
+      console.log('levenshtein title: ' + levenshtein(this.reduceField(this.state.data.title), this.reduceField(this.state.fields.title)))
+    }
+    if(this.state.data.artist != null && this.state.fields.artist != null) {
+      console.log('jaro-winkler artist: ' + distance(this.reduceField(this.state.data.artist), this.reduceField(this.state.fields.artist)))
+      console.log('levenshtein artist: ' + levenshtein(this.reduceField(this.state.data.artist), this.reduceField(this.state.fields.artist)))
+    }
+    if(this.state.data.origin != null && this.state.fields.origin != null) {
+      console.log('jaro-winkler origin: ' + distance(this.reduceField(this.state.data.origin), this.reduceField(this.state.fields.origin)))
+      console.log('levenshtein origin: ' + levenshtein(this.reduceField(this.state.data.origin), this.reduceField(this.state.fields.origin)))
+    }
+
+    var tm = ("title" in this.state.data === false || distance(this.reduceField(this.state.data.title), this.reduceField(this.state.fields.title)) >= 0.99) ? true : false;
+    var am = ("artist" in this.state.data === false || distance(this.reduceField(this.state.data.artist), this.reduceField(this.state.fields.artist)) >= 0.99) ? true : false;
+    var om = ("origin" in this.state.data === false || distance(this.reduceField(this.state.data.origin), this.reduceField(this.state.fields.origin)) >= 0.99) ? true : false;
+    var m = {artistMatch: am, titleMatch: tm, originMatch: om}
+    var arrMatch = [{field: this.state.data.artist, match: am}, {field: this.state.data.title, match: tm}, {field: this.state.data.origin, match: om}];
+
+    var popups = {
+      title: "title" in this.state.data === true && distance(this.reduceField(this.state.data.title), this.reduceField(this.state.fields.title)) >= 0.95 && distance(this.reduceField(this.state.data.title), this.reduceField(this.state.fields.title)) < 0.99,
+      artist: "artist" in this.state.data === true && distance(this.reduceField(this.state.data.artist), this.reduceField(this.state.fields.artist)) >= 0.95 && distance(this.reduceField(this.state.data.artist), this.reduceField(this.state.fields.artist)) < 0.99,
+      origin: "origin" in this.state.data === true && distance(this.reduceField(this.state.data.origin), this.reduceField(this.state.fields.origin)) >= 0.95 && distance(this.reduceField(this.state.data.origin), this.reduceField(this.state.fields.origin)) < 0.99,
+    }
+
+    this.setState({ roundPoints: arrMatch.map(x => (x.match && x.field != null)?1:0).reduce((a,b) => (a+b)), checked: true, match: m, popup: popups }, this.postCheck);
   }
 
   postCheck = () => {
-    if (this.state.fields.artistMatch && this.state.fields.titleMatch && this.state.fields.originMatch) {
-      this.setState({modal: true})
+    if (this.state.match.artistMatch && this.state.match.titleMatch && this.state.match.originMatch) {
+      this.setState({modal: true, visible: true})
     }
+  }
+
+  reduceField = (field) => {
+    return (field === null || field === undefined ? null:field.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))
   }
 
   handleChange = (e) => {
@@ -149,9 +190,9 @@ class MyAudio extends React.Component {
     const value = e.target.value;
     var fields = this.state.fields;
     fields = { ...fields, [e.target.name]: value}
-    console.log(fields)
     this.setState({ fields: fields });
   }
+
 
   render() {
     return (
@@ -161,7 +202,7 @@ class MyAudio extends React.Component {
           <Button secondary onClick={(e) => this.setState({ visible: !this.state.visible })}>Reveal</Button>
           {this.state.data === null && <Button secondary onClick={this.prepareNextRound} disabled={this.state.loading}>Start</Button>}
           {this.state.data !== null && <Button secondary onClick={this.prepareNextRound} disabled={this.state.loading}>Next</Button>}
-          <Segment textAlign='center'>
+          <Segment pAlign='center'>
             {this.state.data != null && <Progress progress='value' indicating value={this.state.answerTimer} total={this.state.data.answerTime} />}
             {this.state.loading && <Loader active />}
             <Segment basic style={{ display: this.state.visible ? 'block' : 'none' }}>
@@ -171,13 +212,33 @@ class MyAudio extends React.Component {
           <Form>
             <Form.Group widths='equal'>
               {this.state.data != null && this.state.data.title != null &&
-                <Form.Input fluid name='title' label='Title' placeholder='Title' value={this.state.fields.title} onChange={this.handleChange} error={!this.state.fields.titleMatch && this.state.checked} disabled={this.state.fields.titleMatch && this.state.checked} />}
+                <Popup
+                  trigger={<Form.Input fluid name='title' label='Title' placeholder='Title' value={this.state.fields.title} onChange={this.handleChange} error={!this.state.match.titleMatch && this.state.checked} disabled={this.state.match.titleMatch && this.state.checked} />}
+                  content='You are close !'
+                  position='bottom left'
+                  open={this.state.popup.title}
+                  on='click'
+                  onClose={this.handlePopupClose}
+                />
+              }
               {this.state.data != null && this.state.data.artist != null &&
-                <Form.Input fluid name='artist' label='Artist' placeholder='Artist' value={this.state.fields.artist} onChange={this.handleChange} error={!this.state.fields.artistMatch && this.state.checked} disabled={this.state.fields.artistMatch && this.state.checked} />}
+                <Popup
+                  trigger={<Form.Input fluid name='artist' label='Artist' placeholder='Artist' value={this.state.fields.artist} onChange={this.handleChange} error={!this.state.match.artistMatch && this.state.checked} disabled={this.state.match.artistMatch && this.state.checked} />}
+                  content='You are close !'
+                  position='bottom left'
+                  open={this.state.popup.artist}
+                />
+              }
               {this.state.data != null && this.state.data.origin != null &&
-                <Form.Input fluid name='origin' label='Origin' placeholder='Origin' value={this.state.fields.origin} onChange={this.handleChange} error={!this.state.fields.originMatch && this.state.checked} disabled={this.state.fields.originMatch && this.state.checked} />}
+                <Popup
+                  trigger={<Form.Input fluid name='origin' label='Origin' placeholder='Origin' value={this.state.fields.origin} onChange={this.handleChange} error={!this.state.match.originMatch && this.state.checked} disabled={this.state.match.originMatch && this.state.checked} />}
+                  content='You are close !'
+                  position='bottom left'
+                  open={this.state.popup.origin}
+                />
+              }
             </Form.Group>
-            <Form.Button onClick={this.checkValues} disabled={!this.state.start}>Check</Form.Button>
+            <Form.Button style={{marginTop: '3em'}} onClick={this.checkValues} disabled={!this.state.start}>Check</Form.Button>
           </Form>
         </Segment>
 
@@ -186,17 +247,52 @@ class MyAudio extends React.Component {
           onOpen={() => this.setState({modal: true})}
           open={this.state.modal}
         >
-          <Modal.Header>Congratulations</Modal.Header>
+          <Modal.Header>{this.state.match.artistMatch && this.state.match.titleMatch && this.state.match.originMatch ? 'Congratulations':'Time is up !'}</Modal.Header>
           <Modal.Content>
             <Modal.Description>
-              <Header>You have successfully found all the fields for this question !</Header>
+              <Header>{this.state.match.artistMatch && this.state.match.titleMatch && this.state.match.originMatch ? 'You have successfully found all the fields for this question !':'Sorry but you have done all the items of this category, try addind some more to keep playing'}</Header>
+              <p>
+                Here are the expected answers for this item :
+              </p>
+              <List divided relaxed>
+                {this.state.data != null && this.state.data.title != null && <List.Item>
+                  <List.Icon style={styles.iconWidth} name='itunes note' size='large' verticalAlign='middle' />
+                  <List.Content>
+                    <List.Header>Title</List.Header>
+                    <List.Description>{this.state.data.title} <span style={styles.italic}>- Your last answer was : {this.state.fields.title}</span></List.Description>
+                  </List.Content>
+                  {this.state.match.titleMatch ?<List.Icon color='green' name='check' size='large' verticalAlign='middle' />:<List.Icon color='red' name='close' size='large' verticalAlign='middle' />}
+                </List.Item>}
+                {this.state.data != null && this.state.data.artist != null && <List.Item>
+                  <List.Icon style={styles.iconWidth} name='male' size='large' verticalAlign='middle' />
+                  <List.Content>
+                    <List.Header>Artist</List.Header>
+                    <List.Description>{this.state.data.artist} <span style={styles.italic}>- Your last answer was : {this.state.fields.artist}</span></List.Description>
+                  </List.Content>
+                  {this.state.match.artistMatch ?<List.Icon color='green' name='check' size='large' verticalAlign='middle' />:<List.Icon color='red' name='close' size='large' verticalAlign='middle' />}
+                </List.Item>}
+                {this.state.data != null && this.state.data.origin != null && <List.Item>
+                  <List.Icon style={styles.iconWidth} name='film' size='large' verticalAlign='middle' />
+                  <List.Content>
+                    <List.Header>Origin</List.Header>
+                    <List.Description>{this.state.data.origin} <span style={styles.italic}>- Your last answer was : {this.state.fields.origin}</span></List.Description>
+                  </List.Content>
+                  {this.state.match.originMatch ?<List.Icon color='green' name='check' size='large' verticalAlign='middle' />:<List.Icon color='red' name='close' size='large' verticalAlign='middle' />}
+                </List.Item>}
+              </List>
+              {this.state.roundPoints > 0 && <p>
+                Your answers on this round granted you {this.state.roundPoints} {this.state.roundPoints > 1 ? 'points':'point'}.
+              </p>}
+              {this.state.roundPoints === 0 && <p>
+                Your answers on this round did not grant you any points.
+              </p>}
             </Modal.Description>
           </Modal.Content>
           <Modal.Actions>
             <Button
               content="Got it !"
               labelPosition='right'
-              icon='checkmark'
+              icon={this.state.match.artistMatch && this.state.match.titleMatch && this.state.match.originMatch ? 'checkmark':'close'}
               onClick={() => this.setState({modal: false})}
               positive
             />
@@ -226,6 +322,16 @@ class MyAudio extends React.Component {
         </Modal>
       </Segment>
     )
+  }
+}
+
+const styles = {
+  italic: {
+    fontStyle: 'italic',
+  },
+  iconWidth: {
+    width: '10%',
+    textAlign: 'center',
   }
 }
 

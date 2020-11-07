@@ -1,11 +1,13 @@
 import React from 'react'
 import {
     Button,
+    Header,
     Icon,
     Menu,
     Segment,
     Sidebar,
 } from 'semantic-ui-react'
+import MyHome from './home'
 import MyVideo from './video'
 import MyAudio from './audio'
 import MyItems from './addItem'
@@ -48,10 +50,13 @@ const MySidebar = (allData) => {
             </Menu.Item>
             </Sidebar>
 
-            <Sidebar.Pusher dimmed={visible}>
+            <Sidebar.Pusher dimmed={visible} style={{backgroundColor: 'aliceblue'}}>
                 <Segment basic>
                     <Button secondary
                         onClick={(e) => setVisible(true)}>Menu</Button>
+                    <Header as='h1' textAlign='center' style={styles.glitchFont}>Quizz-O-Tron 3000</Header>
+                    <p style={{textAlign: 'center'}}>The best, the only, the all-in-one blindtest of all time !</p>
+                    {menu === 'home' && <MyHome allData={allData}/>}
                     {menu === 'video' && <MyVideo allData={allData}/>}
                     {menu === 'audio' && <MyAudio allData={allData}/>}
                     {menu === 'items' && <MyItems allData={allData}/>}
@@ -59,6 +64,14 @@ const MySidebar = (allData) => {
             </Sidebar.Pusher>
         </Sidebar.Pushable>
     )
+}
+
+const styles={
+    glitchFont: {
+        fontFamily: 'Glitch Inside',
+        fontSize: '5em',
+        marginBottom: '0px',
+    }
 }
 
 export default MySidebar

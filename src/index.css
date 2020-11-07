@@ -11,3 +11,8 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+@font-face {
+  font-family: 'Glitch Inside';
+  src: local('Glitch Inside'), url(./fonts/glitch-inside.otf);
+}
