@@ -186,7 +186,6 @@ class MyAudio extends React.Component {
   }
 
   handleChange = (e) => {
-    console.log('handleChange')
     const value = e.target.value;
     var fields = this.state.fields;
     fields = { ...fields, [e.target.name]: value}
