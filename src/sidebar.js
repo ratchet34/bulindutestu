@@ -11,6 +11,7 @@ import MyHome from './home'
 import MyVideo from './video'
 import MyAudio from './audio'
 import MyItems from './addItem'
+import MyBuzzer from './buzzer'
 
 const MySidebar = (allData) => {
     const [visible, setVisible] = React.useState(false)
@@ -48,6 +49,11 @@ const MySidebar = (allData) => {
                     <Icon name='add' />
               Add
             </Menu.Item>
+                <Menu.Item as='a'
+                    onClick={(e) => setMenu('buzzer')}>
+                    <Icon name='add' />
+              Buzzer
+            </Menu.Item>
             </Sidebar>
 
             <Sidebar.Pusher dimmed={visible} style={{backgroundColor: 'aliceblue'}}>
@@ -60,6 +66,7 @@ const MySidebar = (allData) => {
                     {menu === 'video' && <MyVideo allData={allData}/>}
                     {menu === 'audio' && <MyAudio allData={allData}/>}
                     {menu === 'items' && <MyItems allData={allData}/>}
+                    {menu === 'buzzer' && <MyBuzzer/>}
                 </Segment>
             </Sidebar.Pusher>
         </Sidebar.Pushable>
