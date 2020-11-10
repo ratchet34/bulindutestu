@@ -36,7 +36,7 @@ class MyAudio extends React.Component {
         artistMatch: false,
         originMatch: false,
       },
-      popup: {
+      distance: {
         title: false,
         artist: false,
         origin: false,
@@ -166,13 +166,13 @@ class MyAudio extends React.Component {
     var m = {artistMatch: am, titleMatch: tm, originMatch: om}
     var arrMatch = [{field: this.state.data.artist, match: am}, {field: this.state.data.title, match: tm}, {field: this.state.data.origin, match: om}];
 
-    var popups = {
-      title: "title" in this.state.data === true && distance(this.reduceField(this.state.data.title), this.reduceField(this.state.fields.title)) >= 0.95 && distance(this.reduceField(this.state.data.title), this.reduceField(this.state.fields.title)) < 0.99,
-      artist: "artist" in this.state.data === true && distance(this.reduceField(this.state.data.artist), this.reduceField(this.state.fields.artist)) >= 0.95 && distance(this.reduceField(this.state.data.artist), this.reduceField(this.state.fields.artist)) < 0.99,
-      origin: "origin" in this.state.data === true && distance(this.reduceField(this.state.data.origin), this.reduceField(this.state.fields.origin)) >= 0.95 && distance(this.reduceField(this.state.data.origin), this.reduceField(this.state.fields.origin)) < 0.99,
+    var allDistance = {
+      title: "title" in this.state.data === true ? distance(this.reduceField(this.state.data.title), this.reduceField(this.state.fields.title)):0,
+      artist: "artist" in this.state.data === true ? distance(this.reduceField(this.state.data.artist), this.reduceField(this.state.fields.artist)):0,
+      origin: "origin" in this.state.data === true ? distance(this.reduceField(this.state.data.origin), this.reduceField(this.state.fields.origin)):0,
     }
 
-    this.setState({ roundPoints: arrMatch.map(x => (x.match && x.field != null)?1:0).reduce((a,b) => (a+b)), checked: true, match: m, popup: popups }, this.postCheck);
+    this.setState({ roundPoints: arrMatch.map(x => (x.match && x.field != null)?1:0).reduce((a,b) => (a+b)), checked: true, match: m, distance: allDistance }, this.postCheck);
   }
 
   postCheck = () => {
@@ -214,27 +214,25 @@ class MyAudio extends React.Component {
               {this.state.data != null && this.state.data.title != null &&
                 <Popup
                   trigger={<Form.Input fluid name='title' label='Title' placeholder='Title' value={this.state.fields.title} onChange={this.handleChange} error={!this.state.match.titleMatch && this.state.checked} disabled={this.state.match.titleMatch && this.state.checked} />}
-                  content='You are close !'
+                  content={this.state.distance.title > 0.95 ?'You are close !':'Try again !'}
                   position='bottom left'
-                  open={this.state.popup.title}
-                  on='click'
-                  onClose={this.handlePopupClose}
+                  open={this.state.checked && this.state.distance.title < 0.99}
                 />
               }
               {this.state.data != null && this.state.data.artist != null &&
                 <Popup
                   trigger={<Form.Input fluid name='artist' label='Artist' placeholder='Artist' value={this.state.fields.artist} onChange={this.handleChange} error={!this.state.match.artistMatch && this.state.checked} disabled={this.state.match.artistMatch && this.state.checked} />}
-                  content='You are close !'
+                  content={this.state.distance.artist > 0.95 ?'You are close !':'Try again !'}
                   position='bottom left'
-                  open={this.state.popup.artist}
+                  open={this.state.checked && this.state.distance.artist < 0.99}
                 />
               }
               {this.state.data != null && this.state.data.origin != null &&
                 <Popup
                   trigger={<Form.Input fluid name='origin' label='Origin' placeholder='Origin' value={this.state.fields.origin} onChange={this.handleChange} error={!this.state.match.originMatch && this.state.checked} disabled={this.state.match.originMatch && this.state.checked} />}
-                  content='You are close !'
+                  content={this.state.distance.origin > 0.95 ?'You are close !':'Try again !'}
                   position='bottom left'
-                  open={this.state.popup.origin}
+                  open={this.state.checked && this.state.distance.origin < 0.99}
                 />
               }
             </Form.Group>
