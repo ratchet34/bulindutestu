@@ -6,6 +6,8 @@ import {
     Header,
     Icon,
     Input,
+    Label,
+    List,
     Menu,
     Popup,
     Segment,
@@ -40,6 +42,16 @@ class MySidebar extends React.Component {
         this.setState({ gameData: gameData })
     }
 
+    setMenu = (menu) => {
+        this.setState({ menu: menu })
+    }
+
+    sortPlayersByPoints = (a, b) => {
+        if ( a.points > b.points ) return -1;
+        if ( a.points < b.points ) return 1;
+        return 0;
+    }
+
     render() {
         return (
             <Sidebar.Pushable as={Segment} basic style={{height: '100vh'}}>
@@ -47,7 +59,7 @@ class MySidebar extends React.Component {
                     as={Menu}
                     animation='overlay'
                     icon='labeled'
-                    inverted
+                    
                     onHide={() => this.setState({ visible: false })}
                     vertical
                     visible={this.state.visible}
@@ -82,11 +94,11 @@ class MySidebar extends React.Component {
 
                 <Sidebar.Pusher dimmed={this.state.visible} style={{backgroundColor: 'aliceblue'}}>
                     <Container basic>
-                        <Button secondary
-                            onClick={(e) => this.setState({ visible: true})}>Menu</Button>
+                        <Button size='huge' icon style={{marginTop: '1em'}}
+                            onClick={(e) => this.setState({ visible: true})}><Icon name='list' /> Menu</Button>
                         <Header as='h1' textAlign='center' style={styles.glitchFont}>Quizz-O-Tron 3000</Header>
                         <p style={{textAlign: 'center'}}>The best, the only, the all-in-one blindtest of all time !</p>
-                        {this.state.menu === 'home' && <MyHome game={this.state.gameData} stateHandler={{setUsername: this.setUsername, setGameData: this.setGameData}}/>}
+                        {this.state.menu === 'home' && <MyHome game={this.state.gameData} stateHandler={{ setUsername: this.setUsername, setGameData: this.setGameData, setMenu: this.setMenu }}/>}
                         {this.state.menu === 'video' && <MyVideo game={this.state.gameData}/>}
                         {this.state.menu === 'audio' && <MyAudio game={this.state.gameData}/>}
                         {this.state.menu === 'items' && <MyItems game={this.state.gameData}/>}
@@ -102,15 +114,36 @@ class MySidebar extends React.Component {
                             <Header as='h3'>Game state</Header>
                             <Form>
                                 <Form.Field>
-                                    <Input fluid label='Game seed' value={this.state.gameData.seed} />
+                                    <Input fluid value={this.state.gameData.seed}><Label basic>Game seed</Label><input /></Input>
                                 </Form.Field>
                                 <Form.Field>
-                                    <Input fluid label='Your username' value={this.state.username} />
+                                    <Input fluid value={this.state.username}><Label basic>Your username</Label><input /></Input>
                                 </Form.Field>
                                 <Form.Field>
-                                    <Input fluid label='Your points' value={this.state.gameData.players[this.state.gameData.players.map(x => x.name).indexOf(this.state.username)].points} />
+                                    <Input fluid value={this.state.gameData.players[this.state.username].points}><Label basic>Your points</Label><input /></Input>
                                 </Form.Field>
                             </Form>
+                            <p>Game Top 3</p>
+                            <List ordered divided relaxed>
+                                <List.Item>
+                                    <List.Content>
+                                        <List.Header as='a'>{Object.entries(this.state.gameData.players).map(x => {x[1].name = x[0]; return x[1]}).sort(this.sortPlayersByPoints)[0].name}</List.Header>
+                                        <List.Description as='a'>With {Object.entries(this.state.gameData.players).map(x => {x[1].name = x[0]; return x[1]}).sort(this.sortPlayersByPoints)[0].points} {Object.entries(this.state.gameData.players).map(x => {x[1].name = x[0]; return x[1]}).sort(this.sortPlayersByPoints)[0].points === 1?'point':'points'}</List.Description>
+                                    </List.Content>
+                                </List.Item>
+                                {Object.keys(this.state.gameData.players).length > 1 && <List.Item>
+                                    <List.Content>
+                                        <List.Header as='a'>{Object.entries(this.state.gameData.players).map(x => {x[1].name = x[0]; return x[1]}).sort(this.sortPlayersByPoints)[1].name}</List.Header>
+                                        <List.Description as='a'>With {Object.entries(this.state.gameData.players).map(x => {x[1].name = x[0]; return x[1]}).sort(this.sortPlayersByPoints)[1].points} {Object.entries(this.state.gameData.players).map(x => {x[1].name = x[0]; return x[1]}).sort(this.sortPlayersByPoints)[1].points === 1?'point':'points'}</List.Description>
+                                    </List.Content>
+                                </List.Item>}
+                                {Object.keys(this.state.gameData.players).length > 2 && <List.Item>
+                                    <List.Content>
+                                        <List.Header as='a'>{Object.entries(this.state.gameData.players).map(x => {x[1].name = x[0]; return x[1]}).sort(this.sortPlayersByPoints)[2].name}</List.Header>
+                                        <List.Description as='a'>With {Object.entries(this.state.gameData.players).map(x => {x[1].name = x[0]; return x[1]}).sort(this.sortPlayersByPoints)[2].points} {Object.entries(this.state.gameData.players).map(x => {x[1].name = x[0]; return x[1]}).sort(this.sortPlayersByPoints)[2].points === 1?'point':'points'}</List.Description>
+                                    </List.Content>
+                                </List.Item>}
+                            </List>
                         </Segment>
                     </Popup>}
                 </Sidebar.Pusher>

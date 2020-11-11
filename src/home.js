@@ -5,6 +5,7 @@ import {
   Grid,
   Header,
   Input,
+  Label,
   Message,
   Modal,
   Popup,
@@ -22,12 +23,13 @@ class MyHome extends React.Component {
       username: '',
       gameType: '',
       usernameError: false,
+      joinGameId: ''
     };
   }
 
   startGame = () => {
     console.log('startGame');
-    if (this.state.username && this.state.username !== '' && this.state.gameType && this.state.gameType !== '') {
+    if ( this.state.username && this.state.username !== '' && this.state.gameType && this.state.gameType !== '' ) {
       console.log('gotUsername');
       this.setState({ formError: false })
       fetch("http://localhost:3001/game", {
@@ -49,6 +51,7 @@ class MyHome extends React.Component {
             console.log(game);
             this.props.stateHandler.setUsername(this.state.username);
             this.props.stateHandler.setGameData(game);
+            this.props.stateHandler.setMenu('audio');
           }
         },
         (error) => {
@@ -60,9 +63,42 @@ class MyHome extends React.Component {
     }
   }
 
-  redirectToApp = () => {
-
+  joinGame = () => {
+    console.log('joinGame');
+    if ( this.state.username && this.state.username !== '' && this.state.joinGameId && this.state.joinGameId !== '' ) {
+      console.log('sending patch');
+      this.setState({ formError: false });
+      fetch("http://localhost:3001/game", {
+        method: 'PATCH',
+        mode: 'cors',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'origin': window.location.origin
+        },
+        body: JSON.stringify({
+          gameId: this.state.joinGameId,
+          username: this.state.username
+        })
+      }).then(res => res.json()).then(
+        (result) => {
+          if (result.body) {
+            var game = JSON.parse(result.body);
+            console.log(game);
+            this.props.stateHandler.setUsername(this.state.username);
+            this.props.stateHandler.setGameData(game);
+            this.props.stateHandler.setMenu(game.gameType === 'couch'?'buzzer':'audio');
+          }
+        },
+        (error) => {
+          console.error(error.message)
+        }
+      )
+    } else {
+      this.setState({ formError: true });
+    }
   }
+
 
   handleChange = (e) => {
     this.setState({ [e.target.name]: e.target.value });
@@ -110,7 +146,7 @@ class MyHome extends React.Component {
               <p>
                 Enter the id of the game and your username then press the join button
               </p>
-              <Form>
+              <Form error={this.state.formError}>
                 <Form.Input name='joinGameId' label='Game ID' value={this.state.joinGameId} onChange={this.handleChange}/>
                 <Form.Input nmae='username' label='Username' value={this.state.username} onChange={this.handleChange}/>
               </Form>
@@ -124,7 +160,7 @@ class MyHome extends React.Component {
               content="Join"
               labelPosition='right'
               icon='checkmark'
-              onClick={() => this.setState({ joinModal: true })}
+              onClick={this.joinGame}
               positive
             />
           </Modal.Actions>
