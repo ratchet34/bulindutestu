@@ -4,14 +4,17 @@ import {
   Form,
   Grid,
   Header,
+  Icon,
   Input,
   Label,
+  List,
   Message,
   Modal,
   Popup,
   Segment,
   Statistic,
  } from 'semantic-ui-react'
+ import _ from 'underscore'
 
 
 
@@ -23,7 +26,9 @@ class MyHome extends React.Component {
       username: '',
       gameType: '',
       usernameError: false,
-      joinGameId: ''
+      joinGameId: '',
+      joinModal: false,
+      waitModal: false
     };
   }
 
@@ -51,7 +56,7 @@ class MyHome extends React.Component {
             console.log(game);
             this.props.stateHandler.setUsername(this.state.username);
             this.props.stateHandler.setGameData(game);
-            this.props.stateHandler.setMenu('audio');
+            this.setState({ waitModal: true });
           }
         },
         (error) => {
@@ -87,7 +92,7 @@ class MyHome extends React.Component {
             console.log(game);
             this.props.stateHandler.setUsername(this.state.username);
             this.props.stateHandler.setGameData(game);
-            this.props.stateHandler.setMenu(game.gameType === 'couch'?'buzzer':'audio');
+            this.setState({ waitModal: true });
           }
         },
         (error) => {
@@ -97,6 +102,60 @@ class MyHome extends React.Component {
     } else {
       this.setState({ formError: true });
     }
+  }
+
+  setPlayerReady = () => {
+    if ( this.state.username && this.state.username !== '' && this.props.game.id ) {
+      fetch("http://localhost:3001/game", {
+        method: 'PATCH',
+        mode: 'cors',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'origin': window.location.origin
+        },
+        body: JSON.stringify({
+          gameId: this.props.game.id,
+          username: this.state.username,
+          status: 'ready'
+        })
+      }).then(res => res.json()).then(
+        (result) => {
+          console.log(result);
+          var game = JSON.parse(result.body);
+          if (game.players) {
+            this.props.stateHandler.setPlayers(game.players);
+          }
+        }
+      )
+    }
+  }
+
+  checkPlayerStatus = () => {
+    setTimeout(() => {
+      fetch("http://localhost:3001/game", {
+        method: 'GET',
+        mode: 'cors',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'origin': window.location.origin
+        },
+        body: JSON.stringify({
+          gameId: this.props.game.id,
+          username: this.state.username,
+          status: 'ready'
+        })
+      }).then(res => res.json()).then(
+        (result) => {
+          console.log(result);
+          var game = JSON.parse(result.body);
+          if (game.players) {
+            this.props.stateHandler.setPlayers(game.players);
+          }
+        }
+      )
+    }, 1000);
   }
 
 
@@ -163,6 +222,48 @@ class MyHome extends React.Component {
               onClick={this.joinGame}
               positive
             />
+          </Modal.Actions>
+        </Modal>
+
+        <Modal
+          open={this.state.waitModal}
+          closeOnDimmerClick={false}
+          onClose={() => {this.setState({ waitModal: false })}}
+        >
+          <Modal.Header>Waiting for players</Modal.Header>
+          <Modal.Content>
+            <Modal.Description>
+              <Header><Icon loading name='spinner' /> Waiting for other players to join the game</Header>
+              <Label as='a' color='teal' image>
+                <Icon name='id card outline' />
+                Game ID
+                {this.props.game && <Label.Detail onClick={() => {navigator.clipboard.writeText(this.props.game.id)}}>{this.props.game.id} (click to copy)</Label.Detail>}
+              </Label>
+              {this.props.game ? <List>
+              {Object.entries(this.props.game.players).map(x => <List.Item><List.Icon name={x[0] === this.props.game.host ?'user secret':'user'}/><List.Content>{x[0]} {x[1].status === 'ready' && <Icon color='green' name='check' />}</List.Content></List.Item>)}
+              </List>:<p><Icon loading name='spinner' /> Waiting for game data.</p>}
+            </Modal.Description>
+          </Modal.Content>
+          <Modal.Actions>
+            <Button color='red' /*onClick={this.leaveGame}*/>
+              Leave
+            </Button>
+            {this.props.game && (this.props.game.host === this.state.username ? <Button
+              content="Launch"
+              labelPosition='right'
+              disabled={_.countBy(Object.entries(this.props.game.players).map(x => x[1].status), (i) => i).ready !== Object.entries(this.props.game.players).length}
+            >Launch</Button>:(this.props.game.players[this.state.username].status !== 'ready' ? <Button
+            content="Ready"
+            labelPosition='right'
+            icon='checkmark'
+            onClick={this.setPlayerReady}
+            positive
+          />:
+          <Button
+            content="Waiting"
+            labelPosition='right'
+            disabled
+          ><Icon loading name='spinner' /> Waiting</Button>))}
           </Modal.Actions>
         </Modal>
       </Segment>

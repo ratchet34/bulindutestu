@@ -27,6 +27,7 @@ class MySidebar extends React.Component {
         visible: false,
         menu: 'home',
         gamePopup: false,
+        username: '',
       };
     }
 
@@ -42,6 +43,10 @@ class MySidebar extends React.Component {
         this.setState({ gameData: gameData })
     }
 
+    setPlayers = (players) => {
+        this.setState({ gameData: {...this.state.gameData, players: players} })
+    }
+
     setMenu = (menu) => {
         this.setState({ menu: menu })
     }
@@ -51,6 +56,8 @@ class MySidebar extends React.Component {
         if ( a.points < b.points ) return 1;
         return 0;
     }
+
+    stateHandler = { setUsername: this.setUsername, setGameData: this.setGameData, setMenu: this.setMenu, setPlayers: this.setPlayers }
 
     render() {
         return (
@@ -98,7 +105,7 @@ class MySidebar extends React.Component {
                             onClick={(e) => this.setState({ visible: true})}><Icon name='list' /> Menu</Button>
                         <Header as='h1' textAlign='center' style={styles.glitchFont}>Quizz-O-Tron 3000</Header>
                         <p style={{textAlign: 'center'}}>The best, the only, the all-in-one blindtest of all time !</p>
-                        {this.state.menu === 'home' && <MyHome game={this.state.gameData} stateHandler={{ setUsername: this.setUsername, setGameData: this.setGameData, setMenu: this.setMenu }}/>}
+                        {this.state.menu === 'home' && <MyHome game={this.state.gameData} stateHandler={this.stateHandler}/>}
                         {this.state.menu === 'video' && <MyVideo game={this.state.gameData}/>}
                         {this.state.menu === 'audio' && <MyAudio game={this.state.gameData}/>}
                         {this.state.menu === 'items' && <MyItems game={this.state.gameData}/>}
@@ -119,9 +126,9 @@ class MySidebar extends React.Component {
                                 <Form.Field>
                                     <Input fluid value={this.state.username}><Label basic>Your username</Label><input /></Input>
                                 </Form.Field>
-                                <Form.Field>
+                                {this.state.gameData.players[this.state.username] && <Form.Field>
                                     <Input fluid value={this.state.gameData.players[this.state.username].points}><Label basic>Your points</Label><input /></Input>
-                                </Form.Field>
+                                </Form.Field>}
                             </Form>
                             <p>Game Top 3</p>
                             <List ordered divided relaxed>
