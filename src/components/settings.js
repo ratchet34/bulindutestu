@@ -194,8 +194,6 @@ class MySettings extends React.Component {
                   </Menu.Item>
                   {this.state.items && new Array(Math.floor(this.filteredItems(this.state.items).length/this.state.pageSize)+1).fill(0).map((x, index) => <Menu.Item active={this.state.page === index+1} onClick={() => this.setState({page: index+1})} key={index+1}>{index+1}</Menu.Item>)}
                   <Menu.Item icon onClick={() => {
-                    console.log(this.state.page);
-                    console.log(new Array(Math.floor(this.filteredItems(this.state.items).length/this.state.pageSize)).fill(0).length)
                     if(this.state.page < 1 + new Array(Math.floor(this.filteredItems(this.state.items).length/this.state.pageSize)).fill(0).length) {
                       this.setState({page: this.state.page+1})
                     }
