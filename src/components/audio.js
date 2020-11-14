@@ -2,12 +2,10 @@ import React from 'react'
 import YouTube from 'react-youtube'
 import {
   Button,
-  Label,
   Loader,
   Modal,
   Segment,
   Header,
-  Container,
   Form,
   Progress,
   List,
@@ -15,6 +13,7 @@ import {
 } from 'semantic-ui-react'
 import levenshtein from 'js-levenshtein'
 import distance from 'jaro-winkler'
+import { reduceField } from '../libs/functions'
 
 
 
@@ -53,16 +52,6 @@ class MyAudio extends React.Component {
     };
   }
 
-  opts = {
-    width: '100%',
-    playerVars: {
-      // https://developers.google.com/youtube/player_parameters
-      autoplay: 0,
-      controls: 0,
-      showinfo: 0,
-    },
-  };
-
   player = null;
 
   _onReady = (event) => {
@@ -87,6 +76,8 @@ class MyAudio extends React.Component {
       case 5:
         event.target.seekTo(this.state.data.from, true)
         event.target.playVideo();
+        break;
+      default:
         break;
     }
 
@@ -149,28 +140,28 @@ class MyAudio extends React.Component {
   checkValues = () => {
     console.log(this.state.fields)
     if(this.state.data.title != null && this.state.fields.title != null) {
-      console.log('jaro-winkler title: ' + distance(this.reduceField(this.state.data.title), this.reduceField(this.state.fields.title)))
-      console.log('levenshtein title: ' + levenshtein(this.reduceField(this.state.data.title), this.reduceField(this.state.fields.title)))
+      console.log('jaro-winkler title: ' + distance(reduceField(this.state.data.title), reduceField(this.state.fields.title)))
+      console.log('levenshtein title: ' + levenshtein(reduceField(this.state.data.title), reduceField(this.state.fields.title)))
     }
     if(this.state.data.artist != null && this.state.fields.artist != null) {
-      console.log('jaro-winkler artist: ' + distance(this.reduceField(this.state.data.artist), this.reduceField(this.state.fields.artist)))
-      console.log('levenshtein artist: ' + levenshtein(this.reduceField(this.state.data.artist), this.reduceField(this.state.fields.artist)))
+      console.log('jaro-winkler artist: ' + distance(reduceField(this.state.data.artist), reduceField(this.state.fields.artist)))
+      console.log('levenshtein artist: ' + levenshtein(reduceField(this.state.data.artist), reduceField(this.state.fields.artist)))
     }
     if(this.state.data.origin != null && this.state.fields.origin != null) {
-      console.log('jaro-winkler origin: ' + distance(this.reduceField(this.state.data.origin), this.reduceField(this.state.fields.origin)))
-      console.log('levenshtein origin: ' + levenshtein(this.reduceField(this.state.data.origin), this.reduceField(this.state.fields.origin)))
+      console.log('jaro-winkler origin: ' + distance(reduceField(this.state.data.origin), reduceField(this.state.fields.origin)))
+      console.log('levenshtein origin: ' + levenshtein(reduceField(this.state.data.origin), reduceField(this.state.fields.origin)))
     }
 
-    var tm = ("title" in this.state.data === false || distance(this.reduceField(this.state.data.title), this.reduceField(this.state.fields.title)) >= 0.99) ? true : false;
-    var am = ("artist" in this.state.data === false || distance(this.reduceField(this.state.data.artist), this.reduceField(this.state.fields.artist)) >= 0.99) ? true : false;
-    var om = ("origin" in this.state.data === false || distance(this.reduceField(this.state.data.origin), this.reduceField(this.state.fields.origin)) >= 0.99) ? true : false;
+    var tm = ("title" in this.state.data === false || distance(reduceField(this.state.data.title), reduceField(this.state.fields.title)) >= 0.99) ? true : false;
+    var am = ("artist" in this.state.data === false || distance(reduceField(this.state.data.artist), reduceField(this.state.fields.artist)) >= 0.99) ? true : false;
+    var om = ("origin" in this.state.data === false || distance(reduceField(this.state.data.origin), reduceField(this.state.fields.origin)) >= 0.99) ? true : false;
     var m = {artistMatch: am, titleMatch: tm, originMatch: om}
     var arrMatch = [{field: this.state.data.artist, match: am}, {field: this.state.data.title, match: tm}, {field: this.state.data.origin, match: om}];
 
     var allDistance = {
-      title: "title" in this.state.data === true ? distance(this.reduceField(this.state.data.title), this.reduceField(this.state.fields.title)):0,
-      artist: "artist" in this.state.data === true ? distance(this.reduceField(this.state.data.artist), this.reduceField(this.state.fields.artist)):0,
-      origin: "origin" in this.state.data === true ? distance(this.reduceField(this.state.data.origin), this.reduceField(this.state.fields.origin)):0,
+      title: "title" in this.state.data === true ? distance(reduceField(this.state.data.title), reduceField(this.state.fields.title)):0,
+      artist: "artist" in this.state.data === true ? distance(reduceField(this.state.data.artist), reduceField(this.state.fields.artist)):0,
+      origin: "origin" in this.state.data === true ? distance(reduceField(this.state.data.origin), reduceField(this.state.fields.origin)):0,
     }
 
     this.setState({ roundPoints: arrMatch.map(x => (x.match && x.field != null)?1:0).reduce((a,b) => (a+b)), checked: true, match: m, distance: allDistance }, this.postCheck);
@@ -180,10 +171,6 @@ class MyAudio extends React.Component {
     if (this.state.match.artistMatch && this.state.match.titleMatch && this.state.match.originMatch) {
       this.setState({modal: true, visible: true})
     }
-  }
-
-  reduceField = (field) => {
-    return (field === null || field === undefined ? null:field.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))
   }
 
   handleChange = (e) => {

@@ -13,11 +13,12 @@ import {
     Segment,
     Sidebar,
 } from 'semantic-ui-react'
-import MyHome from './home'
-import MyVideo from './video'
-import MyAudio from './audio'
-import MyItems from './addItem'
-import MyBuzzer from './buzzer'
+import MyHome from './components/home'
+import MyVideo from './components/video'
+import MyAudio from './components/audio'
+import MyItems from './components/addItem'
+import MyBuzzer from './components/buzzer'
+import MySettings from './components/settings'
 
 class MySidebar extends React.Component {
 
@@ -48,7 +49,21 @@ class MySidebar extends React.Component {
     }
 
     setMenu = (menu) => {
-        this.setState({ menu: menu })
+        this.setState({ menu: menu });
+    }
+
+    setVisible = () => {
+        console.log(this.state.visible);
+        this.setState({ visible: true});
+    }
+
+    handleOnHide = (e, data) => {
+        console.log('handle on hide');
+        console.log(e);
+        console.log(data);
+        if(!e.target.classList.contains('NoClose')){
+            this.setState({ visible: !this.state.visible });
+        }
     }
 
     sortPlayersByPoints = (a, b) => {
@@ -62,12 +77,14 @@ class MySidebar extends React.Component {
     render() {
         return (
             <Sidebar.Pushable as={Segment} basic style={{height: '100vh'}}>
+                
+      
                 <Sidebar
                     as={Menu}
                     animation='overlay'
                     icon='labeled'
                     
-                    onHide={() => this.setState({ visible: false })}
+                    onHide={this.handleOnHide}
                     vertical
                     visible={this.state.visible}
                     width='thin'
@@ -75,41 +92,47 @@ class MySidebar extends React.Component {
                     <Menu.Item as='a'
                         onClick={(e) => this.setState({ menu: 'home' })}>
                         <Icon name='home' />
-                Home
-                </Menu.Item>
-                    <Menu.Item as='a'
+                        Home
+                    </Menu.Item>
+                    {this.state.gameData && <Menu.Item as='a'
                         onClick={(e) => this.setState({ menu: 'audio' })}>
                         <Icon name='sound' />
-                Audio
-                </Menu.Item>
-                    <Menu.Item as='a'
+                        Audio
+                    </Menu.Item>}
+                    {this.state.gameData && <Menu.Item as='a'
                         onClick={(e) => this.setState({ menu: 'video' })}>
                         <Icon name='video' />
-                Video
-                </Menu.Item>
-                    <Menu.Item as='a'
+                    Video
+                    </Menu.Item>}
+                    {this.state.gameData && <Menu.Item as='a'
+                        onClick={(e) => this.setState({ menu: 'buzzer' })}>
+                        <Icon name='bell' />
+                        Buzzer
+                    </Menu.Item>}
+                    {this.state.gameData && <Menu.Item as='a'
                         onClick={(e) => this.setState({ menu: 'items' })}>
                         <Icon name='add' />
-                Add
-                </Menu.Item>
-                    <Menu.Item as='a'
-                        onClick={(e) => this.setState({ menu: 'buzzer' })}>
-                        <Icon name='add' />
-                Buzzer
-                </Menu.Item>
+                        Add
+                    </Menu.Item>}
+                    {true && <Menu.Item as='a'
+                        onClick={(e) => this.setState({ menu: 'settings' })}>
+                        <Icon name='settings' />
+                        Settings
+                    </Menu.Item>}
                 </Sidebar>
 
                 <Sidebar.Pusher dimmed={this.state.visible} style={{backgroundColor: 'aliceblue'}}>
-                    <Container basic>
-                        <Button size='huge' icon style={{marginTop: '1em'}}
-                            onClick={(e) => this.setState({ visible: true})}><Icon name='list' /> Menu</Button>
+                    <Container>
+                        <Button size='huge' className="NoClose" icon style={{marginTop: '1em'}}
+                            onClick={this.setVisible}><Icon className="NoClose" name='list' /> Menu</Button>
                         <Header as='h1' textAlign='center' style={styles.glitchFont}>Quizz-O-Tron 3000</Header>
                         <p style={{textAlign: 'center'}}>The best, the only, the all-in-one blindtest of all time !</p>
-                        {this.state.menu === 'home' && <MyHome game={this.state.gameData} stateHandler={this.stateHandler}/>}
-                        {this.state.menu === 'video' && <MyVideo game={this.state.gameData}/>}
-                        {this.state.menu === 'audio' && <MyAudio game={this.state.gameData}/>}
-                        {this.state.menu === 'items' && <MyItems game={this.state.gameData}/>}
-                        {this.state.menu === 'buzzer' && <MyBuzzer/>}
+                        {this.state.menu === 'home' && <MyHome game={this.state.gameData} username={this.state.username} stateHandler={this.stateHandler}/>}
+                        {this.state.gameData && this.state.menu === 'video' && <MyVideo game={this.state.gameData}/>}
+                        {this.state.gameData && this.state.menu === 'audio' && <MyAudio game={this.state.gameData}/>}
+                        {this.state.gameData && this.state.menu === 'buzzer' && <MyBuzzer game={this.state.gameData}/>}
+                        {this.state.gameData && this.state.menu === 'items' && <MyItems game={this.state.gameData}/>}
+                        {this.state.gameData && this.state.menu === 'settings' && <MySettings game={this.state.gameData} username={this.state.username}/>}
                     </Container>
                     {this.state.gameData && <Popup
                         trigger={<Button icon onClick={this.handleOpen} style={{ position: 'absolute', top: '2em', right: '2em' }}><Icon name='plus'/></Button>}
@@ -117,7 +140,7 @@ class MySidebar extends React.Component {
                         position='bottom left'
                         flowing
                     >
-                        <Segment basic style={{ minWidth: '20rem' }}>
+                        {this.state.gameData && <Segment basic style={{ minWidth: '20rem' }}>
                             <Header as='h3'>Game state</Header>
                             <Form>
                                 <Form.Field>
@@ -126,32 +149,32 @@ class MySidebar extends React.Component {
                                 <Form.Field>
                                     <Input fluid value={this.state.username}><Label basic>Your username</Label><input /></Input>
                                 </Form.Field>
-                                {this.state.gameData.players[this.state.username] && <Form.Field>
+                                {this.state.gameData.players && this.state.gameData.players[this.state.username] && <Form.Field>
                                     <Input fluid value={this.state.gameData.players[this.state.username].points}><Label basic>Your points</Label><input /></Input>
                                 </Form.Field>}
                             </Form>
                             <p>Game Top 3</p>
                             <List ordered divided relaxed>
-                                <List.Item>
+                                <List.Item key="first">
                                     <List.Content>
                                         <List.Header as='a'>{Object.entries(this.state.gameData.players).map(x => {x[1].name = x[0]; return x[1]}).sort(this.sortPlayersByPoints)[0].name}</List.Header>
                                         <List.Description as='a'>With {Object.entries(this.state.gameData.players).map(x => {x[1].name = x[0]; return x[1]}).sort(this.sortPlayersByPoints)[0].points} {Object.entries(this.state.gameData.players).map(x => {x[1].name = x[0]; return x[1]}).sort(this.sortPlayersByPoints)[0].points === 1?'point':'points'}</List.Description>
                                     </List.Content>
                                 </List.Item>
-                                {Object.keys(this.state.gameData.players).length > 1 && <List.Item>
+                                {Object.keys(this.state.gameData.players).length > 1 && <List.Item key="second">
                                     <List.Content>
                                         <List.Header as='a'>{Object.entries(this.state.gameData.players).map(x => {x[1].name = x[0]; return x[1]}).sort(this.sortPlayersByPoints)[1].name}</List.Header>
                                         <List.Description as='a'>With {Object.entries(this.state.gameData.players).map(x => {x[1].name = x[0]; return x[1]}).sort(this.sortPlayersByPoints)[1].points} {Object.entries(this.state.gameData.players).map(x => {x[1].name = x[0]; return x[1]}).sort(this.sortPlayersByPoints)[1].points === 1?'point':'points'}</List.Description>
                                     </List.Content>
                                 </List.Item>}
-                                {Object.keys(this.state.gameData.players).length > 2 && <List.Item>
+                                {Object.keys(this.state.gameData.players).length > 2 && <List.Item key="third">
                                     <List.Content>
                                         <List.Header as='a'>{Object.entries(this.state.gameData.players).map(x => {x[1].name = x[0]; return x[1]}).sort(this.sortPlayersByPoints)[2].name}</List.Header>
                                         <List.Description as='a'>With {Object.entries(this.state.gameData.players).map(x => {x[1].name = x[0]; return x[1]}).sort(this.sortPlayersByPoints)[2].points} {Object.entries(this.state.gameData.players).map(x => {x[1].name = x[0]; return x[1]}).sort(this.sortPlayersByPoints)[2].points === 1?'point':'points'}</List.Description>
                                     </List.Content>
                                 </List.Item>}
                             </List>
-                        </Segment>
+                        </Segment>}
                     </Popup>}
                 </Sidebar.Pusher>
             </Sidebar.Pushable>

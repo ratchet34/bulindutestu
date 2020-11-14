@@ -2,8 +2,6 @@ import React from 'react'
 import {
     Accordion,
     Icon,
-    Segment,
-    Header,
     Form,
     Message,
 } from 'semantic-ui-react'

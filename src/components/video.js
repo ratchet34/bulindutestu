@@ -6,7 +6,6 @@ import {
   Modal,
   Segment,
   Header,
-  Container,
   Form,
   Progress
 } from 'semantic-ui-react'
@@ -73,6 +72,8 @@ class MyVideo extends React.Component {
       case 5:
         event.target.seekTo(this.state.data.from, true)
         event.target.playVideo();
+        break;
+      default:
         break;
     }
 

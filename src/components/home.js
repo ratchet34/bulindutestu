@@ -2,7 +2,6 @@ import React from 'react'
 import { 
   Button,
   Form,
-  Grid,
   Header,
   Icon,
   Input,
@@ -12,22 +11,21 @@ import {
   Modal,
   Popup,
   Segment,
-  Statistic,
  } from 'semantic-ui-react'
  import _ from 'underscore'
- import { vars } from './vars'
+ import { vars } from '../libs/vars'
 
 class MyHome extends React.Component {
 
   constructor(props) {
     super(props);
     this.state = {
-      username: '',
+      username: this.props.username?this.props.username:'',
       gameType: '',
       usernameError: false,
       joinGameId: '',
       joinModal: false,
-      waitModal: false,
+      waitModal: (this.props.game?true:false),
     };
   }
 
@@ -185,6 +183,11 @@ class MyHome extends React.Component {
     }, 1000);
   }
 
+  goToSettings = () => {
+    this.setState({waitModal: false});
+    this.props.stateHandler.setMenu('settings');
+  }
+
 
   handleChange = (e) => {
     this.setState({ [e.target.name]: e.target.value });
@@ -267,7 +270,7 @@ class MyHome extends React.Component {
                 {this.props.game && <Label.Detail onClick={() => {navigator.clipboard.writeText(this.props.game.id)}}>{this.props.game.id} (click to copy)</Label.Detail>}
               </Label>
               {this.props.game ? <List>
-              {Object.entries(this.props.game.players).map(x => <List.Item><List.Icon name={x[0] === this.props.game.host ?'user secret':'user'}/><List.Content>{x[0]} {x[1].status === 'ready' && <Icon color='green' name='check' />} {this.props.game.host === this.state.username && x[0] !== this.props.game.host && <Icon name='close' as='a' onClick={() => this.removePlayer(x[0])}/>}</List.Content></List.Item>)}
+              {Object.entries(this.props.game.players).map(x => <List.Item key={x[0]}><List.Icon name={x[0] === this.props.game.host ?'user secret':'user'}/><List.Content>{x[0]} {x[1].status === 'ready' && <Icon color='green' name='check' />} {this.props.game.host === this.state.username && x[0] !== this.props.game.host && <Icon name='close' as='a' onClick={() => this.removePlayer(x[0])}/>}</List.Content></List.Item>)}
               </List>:<p><Icon loading name='spinner' /> Waiting for game data.</p>}
             </Modal.Description>
           </Modal.Content>
@@ -275,13 +278,12 @@ class MyHome extends React.Component {
             {this.props.game &&
               (this.props.game.host === this.state.username ?
                 <div>
-                  <Button color='red' onClick={() => this.removePlayer(this.state.username)}>Cancel</Button>
+                  <Button primary onClick={this.goToSettings}>Settings</Button>
+                  <Button color='red'>Cancel</Button>
                   <Button
                     content="Launch"
                     positive
-                    disabled={_.countBy(Object.entries(this.props.game.players).map(x => x[1].status), (i) => i).ready !== Object.entries(this.props.game.players).length}>
-                    Launch
-                  </Button>
+                    disabled={_.countBy(Object.entries(this.props.game.players).map(x => x[1].status), (i) => i).ready !== Object.entries(this.props.game.players).length}/>
                 </div>:
                 <div>
                   <Button color='red' onClick={() => this.removePlayer(this.state.username)}>Leave</Button>
