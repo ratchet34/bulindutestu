@@ -14,8 +14,7 @@ import {
     Sidebar,
 } from 'semantic-ui-react'
 import MyHome from './components/home'
-import MyVideo from './components/video'
-import MyAudio from './components/audio'
+import MyGame from './components/game'
 import MyItems from './components/addItem'
 import MyBuzzer from './components/buzzer'
 import MySettings from './components/settings'
@@ -48,6 +47,10 @@ class MySidebar extends React.Component {
         this.setState({ gameData: {...this.state.gameData, players: players} })
     }
 
+    setGameState = (state, callback) => {
+        this.setState({ gameData: {...this.state.gameData, state: state} }, callback)
+    }
+
     setMenu = (menu) => {
         this.setState({ menu: menu });
     }
@@ -72,7 +75,7 @@ class MySidebar extends React.Component {
         return 0;
     }
 
-    stateHandler = { setUsername: this.setUsername, setGameData: this.setGameData, setMenu: this.setMenu, setPlayers: this.setPlayers }
+    stateHandler = { setUsername: this.setUsername, setGameData: this.setGameData, setMenu: this.setMenu, setPlayers: this.setPlayers, setGameState: this.setGameState }
 
     render() {
         return (
@@ -95,14 +98,9 @@ class MySidebar extends React.Component {
                         Home
                     </Menu.Item>
                     {this.state.gameData && <Menu.Item as='a'
-                        onClick={(e) => this.setState({ menu: 'audio' })}>
+                        onClick={(e) => this.setState({ menu: 'game' })}>
                         <Icon name='sound' />
                         Audio
-                    </Menu.Item>}
-                    {this.state.gameData && <Menu.Item as='a'
-                        onClick={(e) => this.setState({ menu: 'video' })}>
-                        <Icon name='video' />
-                    Video
                     </Menu.Item>}
                     {this.state.gameData && <Menu.Item as='a'
                         onClick={(e) => this.setState({ menu: 'buzzer' })}>
@@ -128,8 +126,7 @@ class MySidebar extends React.Component {
                         <Header as='h1' textAlign='center' style={styles.glitchFont}>Quizz-O-Tron 3000</Header>
                         <p style={{textAlign: 'center'}}>The best, the only, the all-in-one blindtest of all time !</p>
                         {this.state.menu === 'home' && <MyHome game={this.state.gameData} username={this.state.username} stateHandler={this.stateHandler}/>}
-                        {this.state.gameData && this.state.menu === 'video' && <MyVideo game={this.state.gameData}/>}
-                        {this.state.gameData && this.state.menu === 'audio' && <MyAudio game={this.state.gameData}/>}
+                        {this.state.gameData && this.state.menu === 'game' && <MyGame game={this.state.gameData} username={this.state.username} stateHandler={this.stateHandler}/>}
                         {this.state.gameData && this.state.menu === 'buzzer' && <MyBuzzer game={this.state.gameData}/>}
                         {this.state.gameData && this.state.menu === 'items' && <MyItems game={this.state.gameData}/>}
                         {this.state.gameData && this.state.menu === 'settings' && <MySettings game={this.state.gameData} username={this.state.username}/>}

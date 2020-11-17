@@ -1,6 +1,7 @@
 import React from 'react'
 import { 
   Button,
+  Dropdown,
   Form,
   Header,
   Icon,
@@ -22,10 +23,12 @@ class MyHome extends React.Component {
     this.state = {
       username: this.props.username?this.props.username:'',
       gameType: '',
+      itemType: '',
       usernameError: false,
       joinGameId: '',
       joinModal: false,
-      waitModal: (this.props.game?true:false),
+      waitModal: (this.props.game&&this.props.game.state==='00_init'?true:false),
+      launchDisabled: true,
     };
   }
 
@@ -159,7 +162,7 @@ class MyHome extends React.Component {
 
   checkGame = () => {
     this.timerCheckGame = setInterval(() => {
-      if(this.props.game.state === 'init' && this.props.game.id) {
+      if(this.props.game.state === '00_init' && this.props.game.id) {
         fetch(vars.api+"game/"+this.props.game.id, {
           method: 'GET',
           mode: 'cors',
@@ -174,11 +177,21 @@ class MyHome extends React.Component {
             var game = JSON.parse(result.body);
             if (game) {
               this.props.stateHandler.setGameData(game);
+              if(this.state.username === game.host) {
+                if(_.countBy(Object.entries(this.props.game.players).map(x => x[1].status), (i) => i).ready === Object.entries(this.props.game.players).length) {
+                  if (this.state.itemType !== '') {
+                    this.setState({launchDisabled: false})
+                  }
+                }
+              }
             }
           }
         )
       } else {
         clearInterval()
+        if(this.props.game.state === '01_host_start') {
+          this.props.stateHandler.setMenu('game');
+        }
       }
     }, 1000);
   }
@@ -195,6 +208,63 @@ class MyHome extends React.Component {
 
   closeOnDimmerClickHandle = (e) => {
     this.setState({ joinModal: false })
+  }
+
+  handleDropdownChange = (e, {value}) => {
+    fetch(vars.api+"game", {
+      method: 'PATCH',
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'origin': window.location.origin
+      },
+      body: JSON.stringify({
+        gameId: this.props.game.id,
+        username: this.state.username,
+        itemType: value
+      })
+    }).then(res => res.json()).then(
+      (result) => {
+        if (result.body) {
+          var game = JSON.parse(result.body);
+          console.log(game);
+          this.setState({itemType: game.itemType, launchDisabled: (_.countBy(Object.entries(this.props.game.players).map(x => x[1].status), (i) => i).ready !== Object.entries(this.props.game.players).length)});
+        }
+      },
+      (error) => {
+        console.error(error.message)
+      }
+    )
+  }
+
+  goToPlayApp = () => {
+    fetch(vars.api+"game", {
+      method: 'PATCH',
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'origin': window.location.origin
+      },
+      body: JSON.stringify({
+        gameId: this.props.game.id,
+        username: this.state.username,
+        state: 'next'
+      })
+    }).then(res => res.json()).then(
+      (result) => {
+        console.log(result);
+        if (result.body) {
+          var game = JSON.parse(result.body);
+          console.log(this.props.game);
+          this.props.stateHandler.setGameState(game.state, () => this.props.stateHandler.setMenu('game'));
+        }
+      },
+      (error) => {
+        console.error(error.message)
+      }
+    )
   }
 
   render() {
@@ -278,12 +348,22 @@ class MyHome extends React.Component {
             {this.props.game &&
               (this.props.game.host === this.state.username ?
                 <div>
+                  <Dropdown
+                    name='itemType'
+                    error={this.state.itemType === ''}
+                    placeholder='Select type of items'
+                    selection
+                    style={{float: 'left'}}
+                    options={[{key:'audio', text:'Audio', value: 'audio'},{key:'video', text:'Video', value: 'video'}]}
+                    onChange={this.handleDropdownChange}
+                  />
                   <Button primary onClick={this.goToSettings}>Settings</Button>
                   <Button color='red'>Cancel</Button>
                   <Button
                     content="Launch"
                     positive
-                    disabled={_.countBy(Object.entries(this.props.game.players).map(x => x[1].status), (i) => i).ready !== Object.entries(this.props.game.players).length}/>
+                    onClick={this.goToPlayApp}
+                    disabled={this.state.launchDisabled}/>
                 </div>:
                 <div>
                   <Button color='red' onClick={() => this.removePlayer(this.state.username)}>Leave</Button>
