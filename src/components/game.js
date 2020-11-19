@@ -48,6 +48,7 @@ class MyGame extends React.Component {
         width: '100%',
       },
       seekDone: false,
+      reported: false,
     };
   }
 
@@ -56,7 +57,6 @@ class MyGame extends React.Component {
   timerPlayGame = null;
 
   componentDidMount = () => {
-    this.setPlayerStatus('game_loaded');
     this.checkGame();
   }
 
@@ -133,7 +133,7 @@ class MyGame extends React.Component {
             if (game) {
               this.props.stateHandler.setGameData(game);
             }
-            if(game.state === '04_item_start') {
+            if(game.state === '03_item_start') {
               clearInterval(timerCheckGame);
               
               //Play the game here
@@ -210,6 +210,7 @@ class MyGame extends React.Component {
         width: '100%',
       },
       seekDone: false,
+      reported: false,
     }, () => this.setPlayerStatus('player_ready'));
   }
 
@@ -255,6 +256,32 @@ class MyGame extends React.Component {
     }
   }
 
+  reportItem = () => {
+    fetch(vars.api+"admin/?a=report", {
+      method: 'PATCH',
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'origin': window.location.origin
+      },
+      body: JSON.stringify({
+        itemId: this.props.game.currentItem.id
+      })
+    }).then(res => res.json()).then(
+      (result) => {
+        console.log(result);
+        if (result.body) {
+          var item = JSON.parse(result.body);
+          this.setState({reported: item.reported});
+        }
+      },
+      (error) => {
+        console.error(error.message)
+      }
+    )
+  }
+
   handleChange = (e) => {
     const value = e.target.value;
     var fields = this.state.fields;
@@ -270,8 +297,9 @@ class MyGame extends React.Component {
         <Segment basic>
           {this.state.debug && <Button secondary onClick={(e) => this.setState({ visible: !this.state.visible })}>Reveal</Button>}
           {this.props.game.players[this.props.username].status === 'item_done' && <Button secondary onClick={this.getReadyForNext}>Ready</Button>}
-          {this.props.game.state === '03_all_youtube_ready' && this.props.username === this.props.game.host && <Button secondary onClick={this.startItem}>Start</Button>}
-          {this.props.game.state === '06_next_item' && this.props.username === this.props.game.host && <Button secondary onClick={this.startItem}>Next</Button>}
+          {this.props.game.state === '02_all_youtube_ready' && this.props.username === this.props.game.host && <Button secondary onClick={this.startItem}>Start</Button>}
+          {this.props.game.state === '05_next_item' && this.props.username === this.props.game.host && <Button secondary onClick={this.startItem}>Next</Button>}
+          {this.props.game.players[this.props.username].status === 'item_running' && <Button floated='right' secondary onClick={this.reportItem}>Report</Button>}
           <Segment pAlign='center'>
             {this.props.game.currentItem && this.props.game.currentItem.id && <Progress progress='value' indicating value={this.state.answerTimer} total={this.props.game.currentItem.answerTime} />}
             <Segment basic style={{ display: this.state.visible ? 'block' : 'none' }}>

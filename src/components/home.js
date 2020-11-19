@@ -189,7 +189,7 @@ class MyHome extends React.Component {
         )
       } else {
         clearInterval()
-        if(this.props.game.state === '01_host_start') {
+        if(this.props.game.state === '01_host_start' && this.props.menu === 'home') {
           this.props.stateHandler.setMenu('game');
         }
       }

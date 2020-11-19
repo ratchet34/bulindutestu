@@ -156,7 +156,7 @@ class MySettings extends React.Component {
             </Menu.Item>
           </Menu.Menu>
         </Menu>
-        <Table celled>
+        <Table attached='bottom' celled>
           <Table.Header>
             <Table.Row>
               <Table.HeaderCell />
@@ -173,7 +173,7 @@ class MySettings extends React.Component {
             {this.state.items && this.filteredItems(this.state.items).slice((this.state.page - 1)*this.state.pageSize,this.state.page*this.state.pageSize-1).map((x, index) => (
               <Table.Row key={x.id}>
                 <Table.Cell collapsing>
-                  <Checkbox slider checked={this.state.items[index].active} onChange={() => this.handleCheckbox(index)} />
+                  <Checkbox slider checked={this.state.items[this.state.items.map(a => a.id).indexOf(x.id)].active} onChange={() => this.handleCheckbox(this.state.items.map(a => a.id).indexOf(x.id))} />
                 </Table.Cell>
                 <Table.Cell><Image size='tiny' src={`https://img.youtube.com/vi/${x.id}/0.jpg`} onClick={() => this.clickPreview(x)}/></Table.Cell>
                 <Table.Cell>{x.title?x.title:''}</Table.Cell>

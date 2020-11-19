@@ -18,6 +18,7 @@ import MyGame from './components/game'
 import MyItems from './components/addItem'
 import MyBuzzer from './components/buzzer'
 import MySettings from './components/settings'
+import MyAdmin from './components/admin'
 
 class MySidebar extends React.Component {
 
@@ -117,6 +118,11 @@ class MySidebar extends React.Component {
                         <Icon name='settings' />
                         Settings
                     </Menu.Item>}
+                    {true && <Menu.Item as='a'
+                        onClick={(e) => this.setState({ menu: 'admin' })}>
+                        <Icon name='user secret' />
+                        Admin
+                    </Menu.Item>}
                 </Sidebar>
 
                 <Sidebar.Pusher dimmed={this.state.visible} style={{backgroundColor: 'aliceblue'}}>
@@ -126,10 +132,11 @@ class MySidebar extends React.Component {
                         <Header as='h1' textAlign='center' style={styles.glitchFont}>Quizz-O-Tron 3000</Header>
                         <p style={{textAlign: 'center'}}>The best, the only, the all-in-one blindtest of all time !</p>
                         {this.state.menu === 'home' && <MyHome game={this.state.gameData} username={this.state.username} stateHandler={this.stateHandler}/>}
-                        {this.state.gameData && this.state.menu === 'game' && <MyGame game={this.state.gameData} username={this.state.username} stateHandler={this.stateHandler}/>}
+                        {this.state.gameData && this.state.menu === 'game' && <MyGame game={this.state.gameData} username={this.state.username} menu={this.state.menu} stateHandler={this.stateHandler}/>}
                         {this.state.gameData && this.state.menu === 'buzzer' && <MyBuzzer game={this.state.gameData}/>}
                         {this.state.gameData && this.state.menu === 'items' && <MyItems game={this.state.gameData}/>}
                         {this.state.gameData && this.state.menu === 'settings' && <MySettings game={this.state.gameData} username={this.state.username}/>}
+                        {this.state.menu === 'admin' && <MyAdmin/>}
                     </Container>
                     {this.state.gameData && <Popup
                         trigger={<Button icon onClick={this.handleOpen} style={{ position: 'absolute', top: '2em', right: '2em' }}><Icon name='plus'/></Button>}
