@@ -202,8 +202,8 @@ class MySettings extends React.Component {
                   </Menu.Item>
                 </Menu>
               </Table.HeaderCell>
-              <Table.HeaderCell colSpan='1'>
-                <Button fluid primary onClick={this.setCustomItems}>
+              <Table.HeaderCell colSpan='1' textAlign='center'>
+                <Button primary onClick={this.setCustomItems}>
                   Apply
                 </Button>
               </Table.HeaderCell>

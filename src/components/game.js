@@ -49,6 +49,8 @@ class MyGame extends React.Component {
       },
       seekDone: false,
       reported: false,
+      checkGameCounter: 0,
+      pointsAdded: false,
     };
   }
 
@@ -115,40 +117,45 @@ class MyGame extends React.Component {
   }
 
   checkGame = () => {
-    var timerCheckGame = setInterval(() => {
-      console.log(this.props.game.state);
-      if(this.props.game.id) {
-        fetch(vars.api+"game/"+this.props.game.id, {
-          method: 'GET',
-          mode: 'cors',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'origin': window.location.origin
-          }
-        }).then(res => res.json()).then(
-          (result) => {
-            var game = JSON.parse(result.body);
-            console.log(game);
-            if (game) {
-              this.props.stateHandler.setGameData(game);
+    this.setState({timerCheckGame: 0}, () => {
+      var timerCheckGame = setInterval(() => {
+        console.log(this.props.game.state);
+        this.setState({timerCheckGame: this.state.timerCheckGame + 1});
+        if(this.props.game.id) {
+          fetch(vars.api+"game/"+this.props.game.id, {
+            method: 'GET',
+            mode: 'cors',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'origin': window.location.origin
             }
-            if(game.state === '03_item_start') {
-              clearInterval(timerCheckGame);
-              
-              //Play the game here
-              this.setState({
-                visible: false,
-                timer: this.props.game.currentItem.time,
-                answerTimer: this.props.game.currentItem.answerTime,
-              }, () => this.startTimer());
-              console.log('letsplay');
+          }).then(res => res.json()).then(
+            (result) => {
+              var game = JSON.parse(result.body);
+              console.log(game);
+              if (game) {
+                this.props.stateHandler.setGameData(game);
+              }
+              if(game.state === '03_item_start') {
+                clearInterval(timerCheckGame);
+                
+                //Play the game here
+                this.setState({
+                  visible: false,
+                  timer: this.props.game.currentItem.time,
+                  answerTimer: this.props.game.currentItem.answerTime,
+                }, () => this.startTimer());
+                console.log('letsplay');
+              }
             }
-          }
-        )
-      }
-      
-    }, 1000);
+          )
+        }
+        if(this.state.checkGameCounter >= 120) {
+          clearInterval(timerCheckGame);
+        }
+      }, 1000);
+    })
   }
 
   // Host method
@@ -180,6 +187,9 @@ class MyGame extends React.Component {
     clearInterval(this.timerPlayGame);
     this.setState({ modal: true, visible: true, answerTimer: 0, timer: 0 });
     this.setPlayerStatus('item_done');
+    if (!this.state.pointsAdded) {
+      this.setState({pointsAdded: true}, this.addPointsToPlayer());
+    }
     this.checkGame();
   }
 
@@ -211,6 +221,8 @@ class MyGame extends React.Component {
       },
       seekDone: false,
       reported: false,
+      checkGameCounter: 0,
+      pointsAdded: false,
     }, () => this.setPlayerStatus('player_ready'));
   }
 
@@ -232,6 +244,34 @@ class MyGame extends React.Component {
         break;
     }
 
+  }
+
+  addPointsToPlayer = () => {
+    fetch(vars.api+"game", {
+      method: 'PATCH',
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'origin': window.location.origin
+      },
+      body: JSON.stringify({
+        gameId: this.props.game.id,
+        username: this.props.username,
+        points: this.state.roundPoints,
+      })
+    }).then(res => res.json()).then(
+      (result) => {
+        console.log(result);
+        if (result.body) {
+          var body = JSON.parse(result.body);
+          this.props.stateHandler.setPlayers(body.players);
+        }
+      },
+      (error) => {
+        console.error(error.message)
+      }
+    )
   }
 
   checkValues = () => {
@@ -274,6 +314,7 @@ class MyGame extends React.Component {
         if (result.body) {
           var item = JSON.parse(result.body);
           this.setState({reported: item.reported});
+          this.endRound();
         }
       },
       (error) => {
@@ -299,7 +340,8 @@ class MyGame extends React.Component {
           {this.props.game.players[this.props.username].status === 'item_done' && <Button secondary onClick={this.getReadyForNext}>Ready</Button>}
           {this.props.game.state === '02_all_youtube_ready' && this.props.username === this.props.game.host && <Button secondary onClick={this.startItem}>Start</Button>}
           {this.props.game.state === '05_next_item' && this.props.username === this.props.game.host && <Button secondary onClick={this.startItem}>Next</Button>}
-          {this.props.game.players[this.props.username].status === 'item_running' && <Button floated='right' secondary onClick={this.reportItem}>Report</Button>}
+          {this.props.game.players[this.props.username].status === 'item_running' &&
+            (this.props.username === this.props.game.host?<Button floated='right' secondary onClick={this.reportItem}>Report</Button>:<Button floated='right' secondary onClick={this.endRound}>End round</Button>)}
           <Segment pAlign='center'>
             {this.props.game.currentItem && this.props.game.currentItem.id && <Progress progress='value' indicating value={this.state.answerTimer} total={this.props.game.currentItem.answerTime} />}
             <Segment basic style={{ display: this.state.visible ? 'block' : 'none' }}>

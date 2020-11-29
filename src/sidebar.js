@@ -108,21 +108,21 @@ class MySidebar extends React.Component {
                         <Icon name='bell' />
                         Buzzer
                     </Menu.Item>}
-                    {this.state.gameData && <Menu.Item as='a'
+                    <Menu.Item as='a'
                         onClick={(e) => this.setState({ menu: 'items' })}>
                         <Icon name='add' />
                         Add
-                    </Menu.Item>}
-                    {true && <Menu.Item as='a'
+                    </Menu.Item>
+                    <Menu.Item as='a'
                         onClick={(e) => this.setState({ menu: 'settings' })}>
                         <Icon name='settings' />
                         Settings
-                    </Menu.Item>}
-                    {true && <Menu.Item as='a'
+                    </Menu.Item>
+                    <Menu.Item as='a'
                         onClick={(e) => this.setState({ menu: 'admin' })}>
                         <Icon name='user secret' />
                         Admin
-                    </Menu.Item>}
+                    </Menu.Item>
                 </Sidebar>
 
                 <Sidebar.Pusher dimmed={this.state.visible} style={{backgroundColor: 'aliceblue'}}>
@@ -134,7 +134,7 @@ class MySidebar extends React.Component {
                         {this.state.menu === 'home' && <MyHome game={this.state.gameData} username={this.state.username} stateHandler={this.stateHandler}/>}
                         {this.state.gameData && this.state.menu === 'game' && <MyGame game={this.state.gameData} username={this.state.username} menu={this.state.menu} stateHandler={this.stateHandler}/>}
                         {this.state.gameData && this.state.menu === 'buzzer' && <MyBuzzer game={this.state.gameData}/>}
-                        {this.state.gameData && this.state.menu === 'items' && <MyItems game={this.state.gameData}/>}
+                        {this.state.menu === 'items' && <MyItems/>}
                         {this.state.gameData && this.state.menu === 'settings' && <MySettings game={this.state.gameData} username={this.state.username}/>}
                         {this.state.menu === 'admin' && <MyAdmin/>}
                     </Container>
@@ -146,17 +146,25 @@ class MySidebar extends React.Component {
                     >
                         {this.state.gameData && <Segment basic style={{ minWidth: '20rem' }}>
                             <Header as='h3'>Game state</Header>
-                            <Form>
-                                <Form.Field>
-                                    <Input fluid value={this.state.gameData.seed}><Label basic>Game seed</Label><input /></Input>
-                                </Form.Field>
-                                <Form.Field>
-                                    <Input fluid value={this.state.username}><Label basic>Your username</Label><input /></Input>
-                                </Form.Field>
-                                {this.state.gameData.players && this.state.gameData.players[this.state.username] && <Form.Field>
-                                    <Input fluid value={this.state.gameData.players[this.state.username].points}><Label basic>Your points</Label><input /></Input>
-                                </Form.Field>}
-                            </Form>
+                            <List>
+                                <List.Item key="gameId">
+                                    <Label color='teal' style={styles.labelFullwidth}>
+                                        Game ID
+                                        <Label.Detail>{this.state.gameData.id}</Label.Detail>
+                                    </Label>
+                                </List.Item>
+                                <List.Item key="username">
+                                    <Label color='blue' style={styles.labelFullwidth}>
+                                        Your username
+                                        <Label.Detail>{this.state.username}</Label.Detail>
+                                    </Label>
+                                </List.Item>
+                                {this.state.gameData.players && this.state.gameData.players[this.state.username] && <List.Item key="points">
+                                    <Label color='yellow' style={styles.labelFullwidth}>
+                                        Your points
+                                    <Label.Detail>{this.state.gameData.players[this.state.username].points}</Label.Detail>
+                                </Label></List.Item>}
+                            </List>
                             <p>Game Top 3</p>
                             <List ordered divided relaxed>
                                 <List.Item key="first">
@@ -191,6 +199,9 @@ const styles={
         fontFamily: 'Glitch Inside',
         fontSize: '5em',
         marginBottom: '0px',
+    },
+    labelFullwidth: {
+        width: '100%'
     }
 }
 

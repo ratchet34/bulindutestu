@@ -35,7 +35,6 @@ class MyHome extends React.Component {
   startGame = () => {
     console.log(vars);
     if ( this.state.username && this.state.username !== '' && this.state.gameType && this.state.gameType !== '' ) {
-      console.log('gotUsername');
       this.setState({ formError: false })
       fetch(vars.api+"game", {
         method: 'POST',
@@ -90,7 +89,6 @@ class MyHome extends React.Component {
         (result) => {
           if (result.body) {
             var game = JSON.parse(result.body);
-            console.log(game);
             this.props.stateHandler.setUsername(this.state.username);
             this.props.stateHandler.setGameData(game);
             this.setState({ waitModal: true });
@@ -173,8 +171,8 @@ class MyHome extends React.Component {
           }
         }).then(res => res.json()).then(
           (result) => {
-            console.log(result);
             var game = JSON.parse(result.body);
+            console.log(game);
             if (game) {
               this.props.stateHandler.setGameData(game);
               if(this.state.username === game.host) {
@@ -188,10 +186,14 @@ class MyHome extends React.Component {
           }
         )
       } else {
-        clearInterval()
-        if(this.props.game.state === '01_host_start' && this.props.menu === 'home') {
-          this.props.stateHandler.setMenu('game');
+        if(this.props.game.state === '01_host_start') {
+          if(this.props.game.gameType === 'lobby' || this.props.game.host === this.props.username) {
+            this.props.stateHandler.setMenu('game');
+          } else if(this.props.game.gameType === 'couch' && this.props.game.host !== this.props.username) {
+            this.props.stateHandler.setMenu('buzzer');
+          }
         }
+        clearInterval();
       }
     }, 1000);
   }
@@ -279,8 +281,7 @@ class MyHome extends React.Component {
               </Form.Field>
         <Segment basic textAlign='center' style={styles.noPaddingX}>
           <Button.Group vertical style={{width: '100%'}}>
-            <Popup content='Play a solo game and score as much points as you can. Share your seed to challenge your friends on the same items.' position='top center' trigger={<Button toggle style={styles.homeButtons} active={this.state.gameType === 'solo'} size='massive' onClick={(e) => {this.setState({ gameType: 'solo' })}}>Solo</Button>}/>
-            <Popup content='Play online with your friends in a private lobby. All player in the lobby will get the same song at the same time.' position='top center' trigger={<Button toggle style={styles.homeButtons} active={this.state.gameType === 'lobby'} size='massive' onClick={(e) => {this.setState({ gameType: 'lobby' })}}>Lobby</Button>}/>
+            <Popup content='Play online solo or with friends in a private lobby. All player in the lobby will get the same song at the same time.' position='top center' trigger={<Button toggle style={styles.homeButtons} active={this.state.gameType === 'lobby'} size='massive' onClick={(e) => {this.setState({ gameType: 'lobby' })}}>Lobby</Button>}/>
             <Popup content='Play with your friends on the couch. Each player can use its cellphone as a buzzer.' position='top center' trigger={<Button toggle style={styles.homeButtons} active={this.state.gameType === 'couch'} size='massive' onClick={(e) => {this.setState({ gameType: 'couch' })}}>Couch</Button>}/>
             <Popup content='Input a seed to join an existing game.' position='top center' trigger={<Button style={styles.homeButtons} onClick={() => this.setState({ joinModal: true })} size='massive'>Join</Button>}/>
           </Button.Group>
@@ -307,7 +308,7 @@ class MyHome extends React.Component {
               </p>
               <Form error={this.state.formError}>
                 <Form.Input name='joinGameId' label='Game ID' value={this.state.joinGameId} onChange={this.handleChange}/>
-                <Form.Input nmae='username' label='Username' value={this.state.username} onChange={this.handleChange}/>
+                <Form.Input name='username' label='Username' value={this.state.username} onChange={this.handleChange}/>
               </Form>
             </Modal.Description>
           </Modal.Content>

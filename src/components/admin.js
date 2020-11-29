@@ -20,6 +20,7 @@ class MyAdmin extends React.Component {
         menu: 'reported',
         username: '',
         password: '',
+        filter: '',
     };
   }
 
@@ -50,7 +51,6 @@ class MyAdmin extends React.Component {
   }
 
   handleChange = (e) => {
-    console.log(e.target.name);
     this.setState({ [e.target.name]: e.target.value });
   }
 
@@ -67,7 +67,7 @@ class MyAdmin extends React.Component {
             <Menu attached='top' tabular>
               <Menu.Item
                 name='Reported'
-                active={this.state.menu}
+                active={this.state.menu === 'reported'}
                 onClick={() => this.setState({menu: 'reported'})}
               />
               <Menu.Menu position='right'>
@@ -83,7 +83,7 @@ class MyAdmin extends React.Component {
                 </Menu.Item>
               </Menu.Menu>
             </Menu>
-            {this.state.menu === 'reported' && <MyReported/>}
+            {this.state.menu === 'reported' && <MyReported username={this.state.username} password={this.state.password} filter={this.state.filter}/>}
           </Segment>
         }
         

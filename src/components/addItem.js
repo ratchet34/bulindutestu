@@ -1,10 +1,13 @@
 import React from 'react'
+import YouTube from 'react-youtube'
 import {
     Accordion,
     Icon,
+    Label,
     Form,
     Message,
 } from 'semantic-ui-react'
+import { findLastIndex } from 'underscore';
 
 const options = [
     { key: 'a', text: 'Audio', value: 'audio' },
@@ -30,6 +33,9 @@ class MyItems extends React.Component {
             success: false,
             errorMsg: '',
             activeIndex: 0,
+            opts: {
+                width: '100%',
+            },
         };
     }
 
@@ -84,6 +90,17 @@ class MyItems extends React.Component {
         this.setState({ fields: fields });
     }
 
+    handleChangeYoutubeId = (e) => {
+        var value = e.target.value;
+        var re = new RegExp('(?:youtube(?:-nocookie)?\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})');
+        if(re.test(value)) {
+            value = value.match(re)[1];
+        }
+        var fields = this.state.fields;
+        fields = { ...fields, [e.target.name]: value }
+        this.setState({ fields: fields });
+    }
+
     handleChangeSelect = (e, result) => {
         var fields = this.state.fields;
         fields = { ...fields, [result.name]: result.value }
@@ -98,6 +115,24 @@ class MyItems extends React.Component {
         this.setState({ activeIndex: newIndex })
     }
 
+    _onReady = (event) => {
+        console.log('_onReady')
+        // access to player in all event handlers via event.target
+        this.player= event.target;
+    }
+
+    getStartTime = () => {
+        var fields = this.state.fields;
+        fields = { ...fields, from: Math.floor(this.player.getCurrentTime()) }
+        this.setState({ fields: fields });
+    }
+
+    getEndTime = () => {
+        var fields = this.state.fields;
+        fields = { ...fields, to: Math.floor(this.player.getCurrentTime()) - this.state.fields.from }
+        this.setState({ fields: fields });
+    }
+
     render() {
         return (
             <Accordion styled fluid style={{marginTop: '1rem'}}>
@@ -110,17 +145,24 @@ class MyItems extends React.Component {
                     Add Item
                 </Accordion.Title>
                 <Accordion.Content active={this.state.activeIndex === 0}>
+                    <YouTube name='ytplayer' videoId={this.state.fields.id} onReady={this._onReady} opts={this.state.opts}/>
                     <Form error={this.state.error} success={this.state.success}>
                         <Form.Group widths='equal'>
-                            <Form.Input fluid name='id' label='Youtube ID' placeholder='Ex: MqDWL0MgAtc' value={this.state.fields.id} onChange={this.handleChange} />
+                            <Form.Input fluid name='id' label='Youtube ID' placeholder='Ex: MqDWL0MgAtc' value={this.state.fields.id} onChange={this.handleChangeYoutubeId} />
                             <Form.Input fluid name='title' label='Title' placeholder='Title' value={this.state.fields.title} onChange={this.handleChange} />
                             <Form.Input fluid name='artist' label='Artist' placeholder='Artist' value={this.state.fields.artist} onChange={this.handleChange} />
                             <Form.Input fluid name='origin' label='Origin' placeholder='Origin' value={this.state.fields.origin} onChange={this.handleChange} />
                         </Form.Group>
                         <Form.Group widths='equal'>
                             <Form.Select required fluid name='type' options={options} label='Type' placeholder='Type' value={this.state.fields.type} onChange={this.handleChangeSelect} />
-                            <Form.Input required fluid type="number" name='from' label='Starting From (sec)' placeholder='0' value={this.state.fields.from} onChange={this.handleChange} />
-                            <Form.Input required fluid type="number" name='to' label='Up to (sec)' placeholder='30' value={this.state.fields.to} onChange={this.handleChange} />
+                            <Form.Input required fluid type="number" name='from' label='Starting From (sec)' placeholder='0' value={this.state.fields.from} onChange={this.handleChange} >
+                                <input />
+                                <Label as='a' onClick={this.getStartTime} style={styles.youtubeLabel}><Icon name='youtube' size='large' style={styles.youtubeIcon}/></Label>
+                            </Form.Input>
+                            <Form.Input required fluid type="number" name='to' label='Time (sec)' placeholder='30' value={this.state.fields.to} onChange={this.handleChange} >
+                                <input />
+                                <Label as='a' onClick={this.getEndTime} style={styles.youtubeLabel}><Icon name='youtube' size='large' style={styles.youtubeIcon}/></Label>
+                            </Form.Input>
                             <Form.Input required fluid type="number" name='answer' label='Answering Time (sec)' placeholder='30' value={this.state.fields.answer} onChange={this.handleChange} />
                         </Form.Group>
                         <Message
@@ -154,6 +196,17 @@ class MyItems extends React.Component {
         )
     }
 
+}
+
+const styles = {
+    youtubeIcon: {
+        margin: '0',
+    },
+    youtubeLabel: {
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+    }
 }
 
 export default MyItems
