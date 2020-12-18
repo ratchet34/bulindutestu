@@ -160,7 +160,7 @@ class MySidebar extends React.Component {
                                     </Label>
                                 </List.Item>
                                 {this.state.gameData.players && this.state.gameData.players[this.state.username] && <List.Item key="points">
-                                    <Label color='yellow' style={styles.labelFullwidth}>
+                                    <Label color='violet' style={styles.labelFullwidth}>
                                         Your points
                                     <Label.Detail>{this.state.gameData.players[this.state.username].points}</Label.Detail>
                                 </Label></List.Item>}

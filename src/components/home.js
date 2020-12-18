@@ -191,6 +191,8 @@ class MyHome extends React.Component {
             this.props.stateHandler.setMenu('game');
           } else if(this.props.game.gameType === 'couch' && this.props.game.host !== this.props.username) {
             this.props.stateHandler.setMenu('buzzer');
+          } else {
+            this.props.stateHandler.setMenu('game');
           }
         }
         clearInterval();
@@ -269,6 +271,61 @@ class MyHome extends React.Component {
     )
   }
 
+  cancelJoin = () => {
+    clearInterval(this.timerCheckGame);
+    fetch(vars.api+"game", {
+      method: 'PATCH',
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'origin': window.location.origin
+      },
+      body: JSON.stringify({
+        gameId: this.props.game.id,
+        username: this.state.username,
+        remove: true
+      })
+    }).then(res => res.json()).then(
+      (result) => {
+        console.log(result);
+        if (result.body) {
+          this.setState({ joinModal: false })
+        }
+      },
+      (error) => {
+        console.error(error.message)
+      }
+    )
+  }
+
+  cancelGame = () => {
+    fetch(vars.api+"game", {
+      method: 'DELETE',
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'origin': window.location.origin
+      },
+      body: JSON.stringify({
+        gameId: this.props.game.id,
+        username: this.state.username,
+        cancel: true
+      })
+    }).then(res => res.json()).then(
+      (result) => {
+        console.log(result);
+        if (result.body) {
+          //this.setState({ joinModal: false })
+        }
+      },
+      (error) => {
+        console.error(error.message)
+      }
+    )
+  }
+
   render() {
     return (
       <Segment>
@@ -313,7 +370,7 @@ class MyHome extends React.Component {
             </Modal.Description>
           </Modal.Content>
           <Modal.Actions>
-            <Button color='black' onClick={() => this.setState({ joinModal: false })}>
+            <Button color='black' onClick={this.cancelJoin}>
               Cancel
             </Button>
             <Button

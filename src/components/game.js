@@ -42,6 +42,8 @@ class MyGame extends React.Component {
       checked: false,
       modal: false,
       modalError: false,
+      modalBuzz: false,
+      playerBuzz: '',
       roundPoints: 0,
       answerTimer: 0,
       opts: {
@@ -138,7 +140,7 @@ class MyGame extends React.Component {
                 this.props.stateHandler.setGameData(game);
               }
               if(game.state === '03_item_start') {
-                clearInterval(timerCheckGame);
+                if(game.gameType === 'lobby') clearInterval(timerCheckGame);
                 
                 //Play the game here
                 this.setState({
@@ -147,6 +149,8 @@ class MyGame extends React.Component {
                   answerTimer: this.props.game.currentItem.answerTime,
                 }, () => this.startTimer());
                 console.log('letsplay');
+              } else if(game.state === '99_buzzing') {
+                this.buzzed(game);
               }
             }
           )
@@ -167,6 +171,10 @@ class MyGame extends React.Component {
     console.log(this.state.opts);
     this.player.playVideo();
     this.setPlayerStatus('item_running');
+    this.setIntervalRpt();
+  }
+
+  setIntervalRpt = () => {
     this.timerPlayGame = setInterval(() => {
       if (this.state.timer <= 0) {
         console.log('pause video');
@@ -214,6 +222,8 @@ class MyGame extends React.Component {
       checked: false,
       modal: false,
       modalError: false,
+      modalBuzz: false,
+      playerBuzz: '',
       roundPoints: 0,
       answerTimer: 0,
       opts: {
@@ -330,6 +340,27 @@ class MyGame extends React.Component {
     this.setState({ fields: fields });
   }
 
+  restartItem = () => {
+    this.player.seekTo(this.props.game.currentItem.from, true);
+    this.player.playVideo();
+  }
+
+  buzzed = (game) => {
+    this.setState({modalBuzz: true});
+    this.player.pauseVideo();
+    clearInterval(this.timerPlayGame);
+  }
+
+  wrongBuzz = () => {
+    this.setState({modalBuzz: false});
+    this.setGameState('resume');
+    this.setIntervalRpt();
+  }
+
+  correctBuzz = () => {
+    this.setState({modalBuzz: false});
+    this.endRound();
+  }
 
   render() {
     return (
@@ -340,6 +371,7 @@ class MyGame extends React.Component {
           {this.props.game.players[this.props.username].status === 'item_done' && <Button secondary onClick={this.getReadyForNext}>Ready</Button>}
           {this.props.game.state === '02_all_youtube_ready' && this.props.username === this.props.game.host && <Button secondary onClick={this.startItem}>Start</Button>}
           {this.props.game.state === '05_next_item' && this.props.username === this.props.game.host && <Button secondary onClick={this.startItem}>Next</Button>}
+          {this.props.game.gameType === 'buzzer' && this.props.username === this.props.game.host && <Button secondary onClick={this.restartItem}>Restart</Button>}
           {this.props.game.players[this.props.username].status === 'item_running' &&
             (this.props.username === this.props.game.host?<Button floated='right' secondary onClick={this.reportItem}>Report</Button>:<Button floated='right' secondary onClick={this.endRound}>End round</Button>)}
           <Segment pAlign='center'>
@@ -348,7 +380,7 @@ class MyGame extends React.Component {
               <YouTube name='ytplayer' videoId={this.props.game.currentItem === null ? 'dummy' : this.props.game.currentItem.id} opts={this.state.opts} onReady={this._onReady} onStateChange={this._onStateChange} style={{position: 'absolute', top: '0', zIndex: '10'}}/>
             </Segment>
           </Segment>
-          <Form>
+          {this.props.game.gameType === 'lobby' && <Form>
             <Form.Group widths='equal'>
               {this.props.game.currentItem != null && this.props.game.currentItem.title != null &&
                 <Popup
@@ -376,7 +408,7 @@ class MyGame extends React.Component {
               }
             </Form.Group>
             <Form.Button style={{marginTop: '3em'}} onClick={this.checkValues} disabled={this.state.answerTimer <= 0}>Check</Form.Button>
-          </Form>
+          </Form>}
         </Segment>
 
         <Modal
@@ -454,6 +486,34 @@ class MyGame extends React.Component {
               icon='close'
               onClick={() => this.setState({modalError: false})}
               negative
+            />
+          </Modal.Actions>
+        </Modal>
+
+        <Modal
+          onClose={() => this.setState({modalBuzz: false})}
+          onOpen={() => this.setState({modalBuzz: true})}
+          open={this.state.modalBuzz}
+        >
+          <Modal.Header>{this.state.playerBuzz} buzzed !</Modal.Header>
+          <Modal.Content>
+            <Modal.Description>
+              <Header>Waiting for your answer !</Header>
+            </Modal.Description>
+          </Modal.Content>
+          <Modal.Actions>
+            <Button
+              content="Resume"
+              labelPosition='right'
+              icon='close'
+              onClick={this.wrongBuzz}
+              negative
+            />
+            <Button
+              content="Correct !"
+              labelPosition='right'
+              onClick={this.correctBuzz}
+              positive
             />
           </Modal.Actions>
         </Modal>

@@ -8,6 +8,7 @@ import {
     Message,
 } from 'semantic-ui-react'
 import { findLastIndex } from 'underscore';
+import { vars } from '../libs/vars'
 
 const options = [
     { key: 'a', text: 'Audio', value: 'audio' },
@@ -45,42 +46,77 @@ class MyItems extends React.Component {
         } else if (this.state.fields.type === '') {
             this.setState({ error: true, errorMsg: 'You need to select a type of item.' })
         } else {
-            var indexData = this.props.allData.allData.map(x => ({type: x.type, id: x.id})).indexOf({type: this.state.fields.type, id: this.state.fields.id})
-            if (indexData !== -1) {
-                this.setState({ error: true, errorMsg: 'This video is already referenced for this type of item'})
-            } else {
-                var newdata = {};
-                if (this.state.fields.title !== '') {
-                    newdata.title = this.state.fields.title
+            fetch(vars.api+"item", {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json',
+                  'origin': window.location.origin
+                },
+                body: JSON.stringify({
+                    id: this.state.fields.id,
+                    title: this.state.fields.title,
+                    artist: this.state.fields.artist,
+                    origin: this.state.fields.origin,
+                    itemType: this.state.fields.type,
+                    from: this.state.fields.from,
+                    to: this.state.fields.to,
+                    answer: this.state.fields.answer,
+                })
+              }).then(res => res.json()).then(
+                (result) => {
+                  console.log(result);
+                  if (result.body) {
+                    this.setState({fields: {
+                        id: '',
+                        title: '',
+                        artist: '',
+                        origin: '',
+                        type: '',
+                        from: 0,
+                        to: 30,
+                        answer: 30,
+                    }});
+                  }
+                },
+                (error) => {
+                  console.error(error.message)
                 }
-                if (this.state.fields.artist !== '') {
-                    newdata.artist = this.state.fields.artist
-                }
-                if (this.state.fields.origin !== '') {
-                    newdata.origin = this.state.fields.origin
-                }
-                newdata.type = this.state.fields.type
-                newdata.id = this.state.fields.id
-                newdata.done = false
-                newdata.from = this.state.fields.from
-                newdata.time = this.state.fields.to - this.state.fields.from
-                newdata.answerTime = this.state.fields.answer
-                this.props.allData.allData.push(newdata)
-                this.setState({ success: true })
-            }
+              )
         }
     }
 
     importJSON = () => {
-        var obj = JSON.parse(this.state.fields.json)
-        obj.forEach(item => {
-            if ('id' in item && ('title' in item || 'artist' in item || 'origin' in item) && 'from' in item && 'time' in item && 'answerTime' && item) {
-                item.done = false
-                if (this.props.allData.allData.map(x => ({type: x.type, id: x.id})).indexOf({type: item.type, id: item.id}) === -1) {
-                    this.props.allData.allData.push(item)
-                }
+        fetch(vars.api+"item", {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'origin': window.location.origin
+            },
+            body: this.state.importJSON
+          }).then(res => res.json()).then(
+            (result) => {
+              console.log(result);
+              if (result.body) {
+                this.setState({fields: {
+                    id: '',
+                    title: '',
+                    artist: '',
+                    origin: '',
+                    type: '',
+                    from: 0,
+                    to: 30,
+                    answer: 30,
+                }});
+              }
+            },
+            (error) => {
+              console.error(error.message)
             }
-        })
+          )
     }
 
     handleChange = (e) => {
@@ -92,9 +128,14 @@ class MyItems extends React.Component {
 
     handleChangeYoutubeId = (e) => {
         var value = e.target.value;
-        var re = new RegExp('(?:youtube(?:-nocookie)?\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})');
-        if(re.test(value)) {
-            value = value.match(re)[1];
+        console.log(value);
+        var re = /(?:youtube(?:-nocookie)?\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/gm;
+        var m;
+
+        m = re.exec(value);
+        if(m !== null) {
+            console.log(m);
+            value = m[1];
         }
         var fields = this.state.fields;
         fields = { ...fields, [e.target.name]: value }
